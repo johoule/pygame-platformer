@@ -135,6 +135,10 @@ class Character(Entity):
         for p in hit_list:
             p.apply(self)
 
+    def check_flag(self, level):
+        if pygame.sprite.collide_rect(self, level.flag):
+            level.completed = True
+
     def move_left(self):
         self.vx = -self.speed
         
@@ -157,13 +161,14 @@ class Character(Entity):
     def die(self):
         pass
     
-    def update(self, world, blocks, coins, enemies, powerups):
+    def update(self, level):
         self.apply_gravity()
-        self.check_world_boundaries(world)
-        self.process_blocks(blocks)
-        self.process_coins(coins)
-        self.process_enemies(enemies)
-        self.process_powerups(powerups)
+        self.check_world_boundaries(level.world)
+        self.process_blocks(level.blocks)
+        self.process_coins(level.coins)
+        self.process_enemies(level.enemies)
+        self.process_powerups(level.powerups)
+        self.check_flag(level)
 
         
 class Coin(Entity):
@@ -200,11 +205,10 @@ class Flag(Entity):
 
         self.value = 10
 
-        
-class Game():
 
-    def __init__(self, hero, blocks, coins, enemies, powerups, flag):
-        self.hero = hero
+class Level():
+    
+    def __init__(self, blocks, coins, enemies, powerups, flag):
         self.blocks = blocks
         self.coins = coins
         self.enemies = enemies
@@ -212,14 +216,21 @@ class Game():
         self.flag = flag
 
         self.all_sprites = pygame.sprite.Group()
-        self.all_sprites.add(hero, blocks, coins, enemies, coins, powerups, flag)
-
-        self.stage = START
+        self.all_sprites.add(blocks, coins, enemies, coins, powerups, flag)
 
         self.world = pygame.Surface([1920, 640])
         
+        self.completed = False
+
+
+class Game():
+
+    def __init__(self, hero, level):
+        self.hero = hero
+        self.level = level
+
     def reset(self):
-        pass
+        self.stage = START
 
     def display_start(self):
         line1 = FONT_LG.render("NAME OF GAME", 1, BLACK)
@@ -268,7 +279,7 @@ class Game():
         window.blit(lives_text, (32, 64))
 
     def calculate_offset(self):
-        world_rect = self.world.get_rect()
+        world_rect = self.level.world.get_rect()
         hero_rect = self.hero.rect
         
         x = -1 * hero_rect.centerx + WIDTH / 2
@@ -295,7 +306,7 @@ class Game():
                         
                     elif self.stage == PLAYING:
                         if event.key == JUMP:
-                            self.hero.jump(self.blocks)
+                            self.hero.jump(self.level.blocks)
                             
                     elif self.stage == LEVEL_COMPLETE:
                         pass
@@ -314,17 +325,18 @@ class Game():
                 else:
                     self.hero.stop()
 
-                self.hero.update(self.world, self.blocks, self.coins, self.enemies, self.powerups)
+                self.hero.update(self.level)
 
             offset_x, offset_y = self.calculate_offset()
 
-            if pygame.sprite.collide_rect(self.hero, self.flag):
+            if self.level.completed:
                 self.stage = LEVEL_COMPLETE
   
             # Drawing
-            self.world.fill(SKY_BLUE)
-            self.all_sprites.draw(self.world)
-            window.blit(self.world, [offset_x, offset_y])
+            self.level.world.fill(SKY_BLUE)
+            self.level.all_sprites.draw(self.level.world)
+            self.level.world.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
+            window.blit(self.level.world, [offset_x, offset_y])
             self.display_stats()
 
             if self.stage == START:
@@ -383,10 +395,14 @@ def main():
     ''' goal '''
     flag = Flag(1792, 512, flag_img)
 
+    ''' finally put it together to make a level '''
+    level = Level(blocks, coins, enemies, powerups, flag)
 
     # Start game
-    game = Game(hero, blocks, coins, enemies, powerups, flag)
+    game = Game(hero, level)
+    game.reset()
     game.play()
+
 
 if __name__ == "__main__":
     main()
