@@ -80,9 +80,6 @@ class Character(Entity):
         self.lives = 3
         self.invincibility = 0
 
-    def apply_gravity(self):
-        self.vy += 1
-
     def check_world_boundaries(self, world):
 
         world_rect = world.get_rect()
@@ -159,10 +156,11 @@ class Character(Entity):
         self.rect.y -= 1
 
     def die(self):
-        pass
+        print("Ouch")
     
     def update(self, level):
-        self.apply_gravity()
+        level.apply_gravity(self)
+        
         self.check_world_boundaries(level.world)
         self.process_blocks(level.blocks)
         self.process_coins(level.coins)
@@ -222,14 +220,17 @@ class Level():
         
         self.completed = False
 
+    def apply_gravity(self, entity):
+        entity.vy += 1
 
 class Game():
 
-    def __init__(self, hero, level):
+    def __init__(self, hero, levels):
         self.hero = hero
-        self.level = level
+        self.levels = levels
 
     def reset(self):
+        self.current_level = 0
         self.stage = START
 
     def display_start(self):
@@ -279,7 +280,7 @@ class Game():
         window.blit(lives_text, (32, 64))
 
     def calculate_offset(self):
-        world_rect = self.level.world.get_rect()
+        world_rect = self.levels[self.current_level].world.get_rect()
         hero_rect = self.hero.rect
         
         x = -1 * hero_rect.centerx + WIDTH / 2
@@ -306,7 +307,7 @@ class Game():
                         
                     elif self.stage == PLAYING:
                         if event.key == JUMP:
-                            self.hero.jump(self.level.blocks)
+                            self.hero.jump(self.levels[self.current_level].blocks)
                             
                     elif self.stage == LEVEL_COMPLETE:
                         pass
@@ -325,18 +326,18 @@ class Game():
                 else:
                     self.hero.stop()
 
-                self.hero.update(self.level)
+                self.hero.update(self.levels[self.current_level])
 
             offset_x, offset_y = self.calculate_offset()
 
-            if self.level.completed:
+            if self.levels[self.current_level].completed:
                 self.stage = LEVEL_COMPLETE
   
             # Drawing
-            self.level.world.fill(SKY_BLUE)
-            self.level.all_sprites.draw(self.level.world)
-            self.level.world.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
-            window.blit(self.level.world, [offset_x, offset_y])
+            self.levels[self.current_level].world.fill(SKY_BLUE)
+            self.levels[self.current_level].all_sprites.draw(self.levels[self.current_level].world)
+            self.levels[self.current_level].world.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
+            window.blit(self.levels[self.current_level].world, [offset_x, offset_y])
             self.display_stats()
 
             if self.stage == START:
@@ -395,11 +396,13 @@ def main():
     ''' goal '''
     flag = Flag(1792, 512, flag_img)
 
-    ''' finally put it together to make a level '''
-    level = Level(blocks, coins, enemies, powerups, flag)
+    # Make a level
+    level1 = Level(blocks, coins, enemies, powerups, flag)
+
+    levels= [level1]
 
     # Start game
-    game = Game(hero, level)
+    game = Game(hero, levels)
     game.reset()
     game.play()
 
