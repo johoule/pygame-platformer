@@ -41,6 +41,14 @@ flagpole_img = pygame.transform.scale(flagpole_img, (64, 64))
 monster_img = pygame.image.load("assets/monster.png")
 monster_img = pygame.transform.scale(monster_img, (64, 64))
 
+# Sounds
+music = None
+jump = None
+kill_enemy = None
+get_coin = None
+get_hit = None
+die = None
+
 # Controls
 LEFT = pygame.K_LEFT
 RIGHT = pygame.K_RIGHT
