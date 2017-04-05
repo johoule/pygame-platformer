@@ -3,14 +3,13 @@ import pygame
 pygame.init()
 
 # Window settings
+TITLE = "Name of Game"
 WIDTH = 960
 HEIGHT = 640
-window = pygame.display.set_mode([WIDTH, HEIGHT])
-pygame.display.set_caption("My Platform Game")
 FPS = 60
-clock = pygame.time.Clock()
 
 # Colors
+TRANSPARENT = (0, 0, 0, 0)
 SKY_BLUE = (135, 206, 235)
 BLACK = (0, 0, 0)
 
@@ -173,7 +172,6 @@ class Character(Entity):
     def die(self):
         self.lives -= 1
         self.hearts = self.max_hearts
-        print("Ouch")
     
     def update(self, level):
         self.apply_gravity(level)
@@ -244,6 +242,7 @@ class Monster(Entity):
         self.check_world_boundaries(level)        
         self.process_blocks(level.blocks)
     
+
 class OneUp(Entity):
     def __init__(self, x, y, image):
         super().__init__(x, y, image)
@@ -264,8 +263,6 @@ class Flag(Entity):
     def __init__(self, x, y, image):
         super().__init__(x, y, image)
 
-        self.value = 10
-
 
 class Level():
     
@@ -276,8 +273,11 @@ class Level():
         self.powerups = powerups
         self.flag = flag
 
-        self.all_sprites = pygame.sprite.Group()
-        self.all_sprites.add(blocks, coins, enemies, coins, powerups, flag)
+        self.active_sprites = pygame.sprite.Group()
+        self.active_sprites.add(coins, enemies, powerups)
+
+        self.inactive_sprites = pygame.sprite.Group()
+        self.inactive_sprites.add(blocks, flag)
 
         self.width = 1920
         self.height = 640
@@ -285,19 +285,32 @@ class Level():
         self.completed = False
         self.gravity = 1
 
+
 class Game():
 
     def __init__(self, hero, level):
         self.hero = hero
         self.level = level
 
-        self.world = pygame.Surface([level.width, level.height])
-        self.stage = START
+        self.window = pygame.display.set_mode([WIDTH, HEIGHT])
+        pygame.display.set_caption(TITLE)
+        self.clock = pygame.time.Clock()
 
-        self.done = False
+        self.background_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
+        self.scenery_layer = None
+        self.inactive_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
+        self.active_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
+        self.foreground_layer = None
+        self.stats_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
+        self.splash_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
+
+    def start(self):
+        self.background_layer.fill(SKY_BLUE)
+        pygame.draw.ellipse(self.background_layer, (255, 255, 125), [768, 64, 96, 96])
         
-    def display_start(self):
-        line1 = FONT_LG.render("NAME OF GAME", 1, BLACK)
+        self.level.inactive_sprites.draw(self.inactive_layer)
+        
+        line1 = FONT_LG.render(TITLE, 1, BLACK)
         line2 = FONT_SM.render("Press any key to start.", 1, BLACK)
 
         x1 = WIDTH / 2 - line1.get_width() / 2;
@@ -306,25 +319,15 @@ class Game():
         x2 = WIDTH / 2 - line2.get_width() / 2;
         y2 = y1 + line1.get_height() + 16;
         
-        window.blit(line1, (x1, y1))
-        window.blit(line2, (x2, y2))
+        self.splash_layer.blit(line1, (x1, y1))
+        self.splash_layer.blit(line2, (x2, y2))
 
-    def display_level_complete(self):
-        line1 = FONT_MD.render("Level Complete!", 1, BLACK)
-        line2 = FONT_SM.render("Press 'C' to continue.", 1, BLACK)
+        self.stage = START
+        self.running = True
 
-        x1 = WIDTH / 2 - line1.get_width() / 2;
-        y1 = HEIGHT / 3 - line1.get_height() / 2;
-        
-        x2 = WIDTH / 2 - line2.get_width() / 2;
-        y2 = y1 + line1.get_height() + 16;
-        
-        window.blit(line1, (x1, y1))
-        window.blit(line2, (x2, y2))
-        
-    def display_game_over(self):
-        line1 = FONT_MD.render("Game Over", 1, BLACK)
-        line2 = FONT_SM.render("Press 'A' to play again.", 1, BLACK)
+    def display_message(self, primary_text, secondary_text):
+        line1 = FONT_MD.render(primary_text, 1, BLACK)
+        line2 = FONT_SM.render(secondary_text, 1, BLACK)
 
         x1 = WIDTH / 2 - line1.get_width() / 2;
         y1 = HEIGHT / 3 - line1.get_height() / 2;
@@ -332,36 +335,37 @@ class Game():
         x2 = WIDTH / 2 - line2.get_width() / 2;
         y2 = y1 + line1.get_height() + 16;
         
-        window.blit(line1, (x1, y1))
-        window.blit(line2, (x2, y2))
+        self.window.blit(line1, (x1, y1))
+        self.window.blit(line2, (x2, y2))
     
-    def display_stats(self):
+    def update_stats(self):
         score_text = FONT_SM.render("Score: " + str(self.hero.score), 1, BLACK)
-        window.blit(score_text, (32, 32))
-
         lives_text = FONT_SM.render("Lives: " + str(self.hero.lives), 1, BLACK)
-        window.blit(lives_text, (32, 64))
-
         hearts_text = FONT_SM.render("Hearts: " + str(self.hero.hearts), 1, BLACK)
-        window.blit(hearts_text, (32, 96))
+
+        self.stats_layer.fill(TRANSPARENT)
+        self.stats_layer.blit(score_text, (32, 32))
+        self.stats_layer.blit(lives_text, (32, 64))
+        self.stats_layer.blit(hearts_text, (32, 96))
 
     def calculate_offset(self):
-        world_rect = self.world.get_rect()
+        active_rect = self.active_layer.get_rect()
         hero_rect = self.hero.rect
         
         x = -1 * hero_rect.centerx + WIDTH / 2
 
         if hero_rect.centerx < WIDTH / 2:
             x = 0
-        elif hero_rect.centerx > world_rect.right - WIDTH / 2:
-            x = -1 * world_rect.right + WIDTH
+        elif hero_rect.centerx > active_rect.right - WIDTH / 2:
+            x = -1 * active_rect.right + WIDTH
 
         return x, 0
 
     def process_input(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                self.done = True
+                self.running = False
+                
             elif event.type == pygame.KEYDOWN:
                 if self.stage == START:
                     self.stage = PLAYING
@@ -386,45 +390,48 @@ class Game():
             else:
                 self.hero.stop()
         
-    def loop(self):  
-        while not self.done:
+    def loop(self):
+        while self.running:
             # Event handling
             self.process_input()
 
             # Game Logic
             if self.stage == PLAYING:
                 self.hero.update(self.level)
-                self.level.enemies.update(self.level)
+                self.level.active_sprites.update(self.level)
 
             if self.level.completed:
                 self.stage = LEVEL_COMPLETE
 
             if self.hero.lives == 0:
                 self.stage = GAME_OVER
-  
+
+            self.update_stats()
+            
             # Drawing
             offset_x, offset_y = self.calculate_offset()
 
-            self.world.fill(SKY_BLUE)
-            self.level.all_sprites.draw(self.world)
+            self.active_layer.fill(TRANSPARENT)
+            self.level.active_sprites.draw(self.active_layer)
 
             if self.hero.invincibility % 3 < 2:
-                self.world.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
+                self.active_layer.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
 
-            window.blit(self.world, [offset_x, offset_y])
-            
-            self.display_stats()
+            self.window.blit(self.background_layer, [offset_x / 3, offset_y])
+            self.window.blit(self.inactive_layer, [offset_x, offset_y])
+            self.window.blit(self.active_layer, [offset_x, offset_y])
+            self.window.blit(self.stats_layer, [0, 0])
 
             if self.stage == START:
-                self.display_start()
+                self.window.blit(self.splash_layer, [0, 0])
             elif self.stage == LEVEL_COMPLETE:
-                self.display_level_complete()
+                self.display_message("Level Complete", "Press 'C' to continue.")
             elif self.stage == GAME_OVER:
-                self.display_game_over()
+                self.display_message("Game Over", "Press 'R' to restart.")
 
             # Update window
             pygame.display.update()
-            clock.tick(FPS)
+            self.clock.tick(FPS)
 
         # Close window on quit
         pygame.quit ()
@@ -481,6 +488,7 @@ def main():
 
     # Start game
     game = Game(hero, level)
+    game.start()
     game.loop()
 
 
