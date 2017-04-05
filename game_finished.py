@@ -44,7 +44,6 @@ monster_img = pygame.transform.scale(monster_img, (64, 64))
 # Sounds
 music = None
 jump = None
-kill_enemy = None
 get_coin = None
 get_hit = None
 die = None
@@ -99,13 +98,11 @@ class Character(Entity):
     def apply_gravity(self, level):
         self.vy += level.gravity
 
-    def check_world_boundaries(self, world):
-        world_rect = world.get_rect()
-        
-        if self.rect.left < world_rect.left:
-            self.rect.left = world_rect.left
-        elif self.rect.right > world_rect.right:
-            self.rect.right = world_rect.right
+    def check_world_boundaries(self, level):
+        if self.rect.left < 0:
+            self.rect.left = 0
+        elif self.rect.right > level.width:
+            self.rect.right = level.width
     
     def process_blocks(self, blocks):
         self.rect.x += self.vx
@@ -174,23 +171,24 @@ class Character(Entity):
         self.rect.y -= 1
 
     def die(self):
+        self.lives -= 1
+        self.hearts = self.max_hearts
         print("Ouch")
     
     def update(self, level):
         self.apply_gravity(level)
+        self.check_world_boundaries(level)        
         self.process_blocks(level.blocks)
         self.process_enemies(level.enemies)
         self.process_coins(level.coins)
         self.process_powerups(level.powerups)
-        self.check_world_boundaries(level.world)
 
         level.completed = self.check_flag(level.flag)
-
-        if self.invincibility > 0:            
-            self.invincibility -= 1
- 
+        
         if self.hearts == 0:
             self.die()
+        if self.invincibility > 0:            
+            self.invincibility -= 1
 
         
 class Coin(Entity):
@@ -204,8 +202,47 @@ class Monster(Entity):
     def __init__(self, x, y, image):
         super().__init__(x, y, image)
 
+        self.vx = -2
+        self.vy = 0
+
+    def apply_gravity(self, level):
+        self.vy += level.gravity
+    
+    def check_world_boundaries(self, level):
+        if self.rect.left < 0:
+            self.rect.left = 0
+            self.vx *= -1
+        elif self.rect.right > level.width:
+            self.rect.right = level.width
+            self.vx *= -1
+
+    def process_blocks(self, blocks):
+        self.rect.x += self.vx
+        hit_list = pygame.sprite.spritecollide(self, blocks, False)
+
+        for block in hit_list:
+            if self.vx > 0:
+                self.rect.right = block.rect.left
+                self.vx *= -1
+            elif self.vx < 0:
+                self.rect.left = block.rect.right
+                self.vx *= -1
+
+        self.rect.y += self.vy
+        hit_list = pygame.sprite.spritecollide(self, blocks, False)
+
+        for block in hit_list:
+            if self.vy > 0:
+                self.rect.bottom = block.rect.top
+                self.vy = 0
+            elif self.vy < 0:
+                self.rect.top = block.rect.bottom
+                self.vy = 0
+    
     def update(self, level):
-        pass
+        self.apply_gravity(level)
+        self.check_world_boundaries(level)        
+        self.process_blocks(level.blocks)
     
 class OneUp(Entity):
     def __init__(self, x, y, image):
@@ -242,7 +279,8 @@ class Level():
         self.all_sprites = pygame.sprite.Group()
         self.all_sprites.add(blocks, coins, enemies, coins, powerups, flag)
 
-        self.world = pygame.Surface([1920, 640])
+        self.width = 1920
+        self.height = 640
         
         self.completed = False
         self.gravity = 1
@@ -252,9 +290,12 @@ class Game():
     def __init__(self, hero, level):
         self.hero = hero
         self.level = level
-        
+
+        self.world = pygame.Surface([level.width, level.height])
         self.stage = START
 
+        self.done = False
+        
     def display_start(self):
         line1 = FONT_LG.render("NAME OF GAME", 1, BLACK)
         line2 = FONT_SM.render("Press any key to start.", 1, BLACK)
@@ -281,7 +322,7 @@ class Game():
         window.blit(line1, (x1, y1))
         window.blit(line2, (x2, y2))
         
-    def display_end(self):
+    def display_game_over(self):
         line1 = FONT_MD.render("Game Over", 1, BLACK)
         line2 = FONT_SM.render("Press 'A' to play again.", 1, BLACK)
 
@@ -305,7 +346,7 @@ class Game():
         window.blit(hearts_text, (32, 96))
 
     def calculate_offset(self):
-        world_rect = self.level.world.get_rect()
+        world_rect = self.world.get_rect()
         hero_rect = self.hero.rect
         
         x = -1 * hero_rect.centerx + WIDTH / 2
@@ -316,56 +357,62 @@ class Game():
             x = -1 * world_rect.right + WIDTH
 
         return x, 0
-                
-    def play(self):  
-        # game loop
-        done = False
 
-        while not done:
+    def process_input(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.done = True
+            elif event.type == pygame.KEYDOWN:
+                if self.stage == START:
+                    self.stage = PLAYING
+                    
+                elif self.stage == PLAYING:
+                    if event.key == JUMP:
+                        self.hero.jump(self.level.blocks)
+                        
+                elif self.stage == LEVEL_COMPLETE:
+                    pass
+                        
+                elif self.stage == GAME_OVER:
+                    pass
+                    
+        pressed = pygame.key.get_pressed()
+        
+        if self.stage == PLAYING:
+            if pressed[LEFT]:
+                self.hero.move_left()
+            elif pressed[RIGHT]:
+                self.hero.move_right()
+            else:
+                self.hero.stop()
+        
+    def loop(self):  
+        while not self.done:
             # Event handling
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    done = True
-                elif event.type == pygame.KEYDOWN:
-                    if self.stage == START:
-                        self.stage = PLAYING
-                        
-                    elif self.stage == PLAYING:
-                        if event.key == JUMP:
-                            self.hero.jump(self.level.blocks)
-                            
-                    elif self.stage == LEVEL_COMPLETE:
-                        pass
-                            
-                    elif self.stage == GAME_OVER:
-                        pass
-                        
-            pressed = pygame.key.get_pressed()
-            
-            # Game logic
+            self.process_input()
+
+            # Game Logic
             if self.stage == PLAYING:
-                if pressed[LEFT]:
-                    self.hero.move_left()
-                elif pressed[RIGHT]:
-                    self.hero.move_right()
-                else:
-                    self.hero.stop()
-
                 self.hero.update(self.level)
-
-            offset_x, offset_y = self.calculate_offset()
+                self.level.enemies.update(self.level)
 
             if self.level.completed:
                 self.stage = LEVEL_COMPLETE
+
+            if self.hero.lives == 0:
+                self.stage = GAME_OVER
   
             # Drawing
-            self.level.world.fill(SKY_BLUE)
-            self.level.all_sprites.draw(self.level.world)
+            offset_x, offset_y = self.calculate_offset()
+
+            self.world.fill(SKY_BLUE)
+            self.level.all_sprites.draw(self.world)
 
             if self.hero.invincibility % 3 < 2:
-                self.level.world.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
+                self.world.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
 
-            window.blit(self.level.world, [offset_x, offset_y])
+            window.blit(self.world, [offset_x, offset_y])
+            
             self.display_stats()
 
             if self.stage == START:
@@ -417,6 +464,7 @@ def main():
     enemies = pygame.sprite.Group()
 
     enemies.add(Monster(832, 512, monster_img))
+    enemies.add(Monster(512, 256, monster_img))
 
     ''' powerups '''
     powerups = pygame.sprite.Group()
@@ -433,7 +481,7 @@ def main():
 
     # Start game
     game = Game(hero, level)
-    game.play()
+    game.loop()
 
 
 if __name__ == "__main__":
