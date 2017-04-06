@@ -410,14 +410,14 @@ class Game():
         self.window.blit(line2, (x2, y2))
     
     def update_stats(self):
-        score_text = FONT_SM.render("Score: " + str(self.hero.score), 1, BLACK)
-        lives_text = FONT_SM.render("Lives: " + str(self.hero.lives), 1, BLACK)
         hearts_text = FONT_SM.render("Hearts: " + str(self.hero.hearts), 1, BLACK)
+        lives_text = FONT_SM.render("Lives: " + str(self.hero.lives), 1, BLACK)
+        score_text = FONT_SM.render("Score: " + str(self.hero.score), 1, BLACK)
 
         self.stats_layer.fill(TRANSPARENT)
-        self.stats_layer.blit(score_text, (32, 32))
+        self.stats_layer.blit(score_text, (WIDTH - score_text.get_width() - 32, 32))
+        self.stats_layer.blit(hearts_text, (32, 32))
         self.stats_layer.blit(lives_text, (32, 64))
-        self.stats_layer.blit(hearts_text, (32, 96))
 
     def calculate_offset(self):
         active_rect = self.active_layer.get_rect()
