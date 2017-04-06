@@ -17,58 +17,64 @@ SKY_BLUE = (135, 206, 235)
 BLACK = (0, 0, 0)
 
 # Fonts
-FONT_SM = pygame.font.Font("assets/prstart.ttf", 16)
-FONT_MD = pygame.font.Font("assets/prstart.ttf", 32)
-FONT_LG = pygame.font.Font("assets/prstart.ttf", 64)
+FONT_SM = pygame.font.Font("assets/fonts/prstart.ttf", 16)
+FONT_MD = pygame.font.Font("assets/fonts/prstart.ttf", 32)
+FONT_LG = pygame.font.Font("assets/fonts/prstart.ttf", 64)
 
 # Images
-hero_img = pygame.image.load("assets/player.png")
+hero_img = pygame.image.load("assets/character/player.png")
 hero_img = pygame.transform.scale(hero_img, (64, 64))
 
-block_img = pygame.image.load("assets/block.png")
-block_img = pygame.transform.scale(block_img, (64, 64))
+TL = pygame.image.load("assets/tiles/top_left.png")
+TM = pygame.image.load("assets/tiles/top_middle.png")
+TR = pygame.image.load("assets/tiles/top_right.png")
+ER = pygame.image.load("assets/tiles/end_right.png")
+EL = pygame.image.load("assets/tiles/end_left.png")
+TP = pygame.image.load("assets/tiles/top.png")
+CN = pygame.image.load("assets/tiles/center.png")
+SP = pygame.image.load("assets/tiles/special.png")
 
-coin_img = pygame.image.load("assets/coin.png")
+coin_img = pygame.image.load("assets/items/gold_1.png")
 coin_img = pygame.transform.scale(coin_img, (64, 64))
 
-heart_img = pygame.image.load("assets/health_potion.png")
+heart_img = pygame.image.load("assets/items/health_potion.png")
 heart_img = pygame.transform.scale(heart_img, (64, 64))
 
-oneup_img = pygame.image.load("assets/oneup_potion.png")
+oneup_img = pygame.image.load("assets/items/oneup_potion.png")
 oneup_img = pygame.transform.scale(oneup_img, (64, 64))
 
-flag_img = pygame.image.load("assets/flag.png")
+flag_img = pygame.image.load("assets/items/flag.png")
 flag_img = pygame.transform.scale(flag_img, (64, 64))
 
-flagpole_img = pygame.image.load("assets/flagpole.png")
+flagpole_img = pygame.image.load("assets/items/flagpole.png")
 flagpole_img = pygame.transform.scale(flagpole_img, (64, 64))
 
-monster_img = pygame.image.load("assets/monster.png")
+monster_img = pygame.image.load("assets/enemies/monster.png")
 monster_img = pygame.transform.scale(monster_img, (64, 64))
 
-slime_img = pygame.image.load("assets/slime.png")
+slime_img = pygame.image.load("assets/enemies/slime.png")
 slime_img = pygame.transform.scale(slime_img, (64, 64))
 
-background_img = pygame.image.load("assets/background.png")
+background_img = pygame.image.load("assets/backgrounds/mountains.png")
 h = background_img.get_height()
 w = int(background_img.get_width() * HEIGHT / h)
 background_img = pygame.transform.scale(background_img, (w, HEIGHT))
 
-scenery_img = pygame.image.load("assets/forest.png")
+scenery_img = pygame.image.load("assets/backgrounds/forest.png")
 h = scenery_img.get_height()
 w = int(scenery_img.get_width() * HEIGHT / h)
 scenery_img = pygame.transform.scale(scenery_img, (w, HEIGHT))
 
 # Sounds
-pygame.mixer.music.load("assets/theme_of_the wanderer.ogg")
+pygame.mixer.music.load("assets/sounds/theme_of_the wanderer.ogg")
 
-JUMP_SOUND = pygame.mixer.Sound("assets/jump.wav")
-COIN_SOUND = pygame.mixer.Sound("assets/pickup_coin.wav")
-POWERUP_SOUND = pygame.mixer.Sound("assets/powerup.wav")
-HURT_SOUND = pygame.mixer.Sound("assets/hurt.ogg")
-DIE_SOUND = pygame.mixer.Sound("assets/death.wav")
-LEVELUP_SOUND = pygame.mixer.Sound("assets/level_up.wav")
-GAMEOVER_SOUND = pygame.mixer.Sound("assets/game_over.wav")
+JUMP_SOUND = pygame.mixer.Sound("assets/sounds/jump.wav")
+COIN_SOUND = pygame.mixer.Sound("assets/sounds/pickup_coin.wav")
+POWERUP_SOUND = pygame.mixer.Sound("assets/sounds/powerup.wav")
+HURT_SOUND = pygame.mixer.Sound("assets/sounds/hurt.ogg")
+DIE_SOUND = pygame.mixer.Sound("assets/sounds/death.wav")
+LEVELUP_SOUND = pygame.mixer.Sound("assets/sounds/level_up.wav")
+GAMEOVER_SOUND = pygame.mixer.Sound("assets/sounds/game_over.wav")
 
 # Controls
 LEFT = pygame.K_LEFT
@@ -568,38 +574,38 @@ class Game():
 
 def main():
     # Make sprites
-    ''' our hero '''
+    ''' hero '''
     hero = Character(500, 512, hero_img)
 
     ''' blocks '''
     blocks = pygame.sprite.Group()
      
     for i in range(0, WIDTH * 100, 64):
-        b = Block(i, 576, block_img)
+        b = Block(i, 576, TM)
         blocks.add(b)
 
-    blocks.add(Block(192, 448, block_img))
-    blocks.add(Block(256, 448, block_img))
-    blocks.add(Block(320, 448, block_img))
+    blocks.add(Block(192, 448, EL))
+    blocks.add(Block(256, 448, TM))
+    blocks.add(Block(320, 448, ER))
 
-    blocks.add(Block(448, 320, block_img))
-    blocks.add(Block(512, 320, block_img))
+    blocks.add(Block(448, 320, EL))
+    blocks.add(Block(512, 320, ER))
     
-    blocks.add(Block(792, 448, block_img))
-    blocks.add(Block(896, 320, block_img))
+    blocks.add(Block(792, 448, SP))
+    blocks.add(Block(896, 320, SP))
 
-    blocks.add(Block(1024, 196, block_img))
-    blocks.add(Block(1088, 196, block_img))
-    blocks.add(Block(1152, 196, block_img))
-    blocks.add(Block(1216, 196, block_img))
-    blocks.add(Block(1280, 196, block_img))
+    blocks.add(Block(1024, 192, EL))
+    blocks.add(Block(1088, 192, TM))
+    blocks.add(Block(1152, 192, TM))
+    blocks.add(Block(1216, 192, TM))
+    blocks.add(Block(1280, 192, ER))
 
-    blocks.add(Block(1536, 512, block_img))
-    blocks.add(Block(1600, 448, block_img))
-    blocks.add(Block(1600, 512, block_img))
-    blocks.add(Block(1664, 384, block_img))
-    blocks.add(Block(1664, 448, block_img))
-    blocks.add(Block(1664, 512, block_img))
+    blocks.add(Block(1536, 512, TL))
+    blocks.add(Block(1600, 448, TL))
+    blocks.add(Block(1600, 512, CN))
+    blocks.add(Block(1664, 384, TP))
+    blocks.add(Block(1664, 448, CN))
+    blocks.add(Block(1664, 512, CN))
 
     ''' coins '''
     coins = pygame.sprite.Group()
