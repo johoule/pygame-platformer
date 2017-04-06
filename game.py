@@ -67,6 +67,7 @@ COIN_SOUND = pygame.mixer.Sound("assets/pickup_coin.wav")
 POWERUP_SOUND = pygame.mixer.Sound("assets/powerup.wav")
 HURT_SOUND = pygame.mixer.Sound("assets/hurt.ogg")
 DIE_SOUND = pygame.mixer.Sound("assets/death.wav")
+LEVELUP_SOUND = pygame.mixer.Sound("assets/level_up.wav")
 GAMEOVER_SOUND = pygame.mixer.Sound("assets/game_over.wav")
 
 # Controls
@@ -167,8 +168,13 @@ class Character(Entity):
 
     def check_flag(self, flag):
         hit_list = pygame.sprite.spritecollide(self, flag, False)
-        
-        return len(hit_list) > 0
+
+        got_it = len(hit_list) > 0
+
+        if got_it:
+            LEVELUP_SOUND.play()
+            
+        return got_it
 
     def die(self):
         self.lives -= 1
@@ -521,8 +527,8 @@ class Game():
 
             if self.level.completed:
                 self.stage = Game.COMPLETE
-
-            if self.hero.lives == 0:
+                pygame.mixer.music.stop()
+            elif self.hero.lives == 0:
                 self.stage = Game.GAME_OVER
                 pygame.mixer.music.stop()
             elif self.hero.hearts == 0:
@@ -611,7 +617,7 @@ def main():
     enemies.add(Monster(832, 512, monster_img))
     enemies.add(Slime(1152, 128, slime_img))
 
-    for i in range(100):
+    for i in range(200):
         r = random.randint(3000, 50000)
         enemies.add(Monster(r, 512, monster_img))
         
