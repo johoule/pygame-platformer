@@ -1,4 +1,5 @@
 import pygame
+import random
 
 pygame.mixer.pre_init(22050, -16, 2, 4096)
 pygame.init()
@@ -47,8 +48,19 @@ monster_img = pygame.transform.scale(monster_img, (64, 64))
 slime_img = pygame.image.load("assets/slime.png")
 slime_img = pygame.transform.scale(slime_img, (64, 64))
 
+background_img = pygame.image.load("assets/background.png")
+h = background_img.get_height()
+w = int(background_img.get_width() * HEIGHT / h)
+background_img = pygame.transform.scale(background_img, (w, HEIGHT))
+
+scenery_img = pygame.image.load("assets/forest.png")
+h = scenery_img.get_height()
+w = int(scenery_img.get_width() * HEIGHT / h // 2)
+scenery_img = pygame.transform.scale(scenery_img, (w, HEIGHT // 2))
+
 # Sounds
-MUSIC = None
+pygame.mixer.music.load("assets/theme_of_the wanderer.ogg")
+
 JUMP_SOUND = pygame.mixer.Sound("assets/jump.wav")
 COIN_SOUND = pygame.mixer.Sound("assets/pickup_coin.wav")
 POWERUP_SOUND = pygame.mixer.Sound("assets/powerup.wav")
@@ -246,10 +258,13 @@ class Monster(Entity):
                 self.rect.top = block.rect.bottom
                 self.vy = 0
     
-    def update(self, level):
-        self.apply_gravity(level)
-        self.move_and_process_blocks(level.blocks)
-        self.check_world_boundaries(level)       
+    def update(self, level, hero):
+        distance = abs(self.rect.x - hero.rect.x)
+
+        if distance < 2 * WIDTH:
+            self.apply_gravity(level)
+            self.move_and_process_blocks(level.blocks)
+            self.check_world_boundaries(level)       
 
 class Slime(Entity):
     def __init__(self, x, y, image):
@@ -301,11 +316,13 @@ class Slime(Entity):
         if reverse:
             self.vx *= -1
     
-    def update(self, level):
-        self.apply_gravity(level)
-        self.move_and_process_blocks(level.blocks)
-        self.check_world_boundaries(level)        
-    
+    def update(self, level, hero):
+        distance = abs(self.rect.x - hero.rect.x)
+
+        if distance < 2 * WIDTH:
+            self.apply_gravity(level)
+            self.move_and_process_blocks(level.blocks)
+            self.check_world_boundaries(level)           
 
 class OneUp(Entity):
     def __init__(self, x, y, image):
@@ -366,25 +383,32 @@ class Game():
     COMPLETE = 2
     GAME_OVER = 3
 
-    def __init__(self, hero, level):
+    def __init__(self, hero):
         self.hero = hero
-        self.level = level
 
         self.window = pygame.display.set_mode([WIDTH, HEIGHT])
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
 
+        self.stage = Game.START
+        self.running = True
+        
+    def start(self, level):
+        self.level = level
+        
         self.background_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
-        self.scenery_layer = None
+        self.scenery_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
         self.inactive_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
         self.active_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
         self.foreground_layer = None
         self.stats_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
         self.splash_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
 
-    def start(self):
-        self.background_layer.fill(SKY_BLUE)
-        pygame.draw.ellipse(self.background_layer, (255, 255, 125), [768, 64, 96, 96])
+        for i in range(0, level.width, background_img.get_width()):
+            self.background_layer.blit(background_img, [i, 0])
+        
+        for i in range(0, level.width, scenery_img.get_width()):
+            self.scenery_layer.blit(scenery_img, [i, HEIGHT // 2])
         
         self.level.inactive_sprites.draw(self.inactive_layer)
         
@@ -399,9 +423,6 @@ class Game():
         
         self.splash_layer.blit(line1, (x1, y1))
         self.splash_layer.blit(line2, (x2, y2))
-
-        self.stage = Game.START
-        self.running = True
 
     def display_message(self, primary_text, secondary_text):
         line1 = FONT_MD.render(primary_text, 1, BLACK)
@@ -447,6 +468,8 @@ class Game():
             elif event.type == pygame.KEYDOWN:
                 if self.stage == Game.START:
                     self.stage = Game.PLAYING
+
+                    pygame.mixer.music.play(-1)
                     
                 elif self.stage == Game.PLAYING:
                     if event.key == JUMP:
@@ -477,7 +500,7 @@ class Game():
             # Game Logic
             if self.stage == Game.PLAYING:
                 self.hero.update(self.level)
-                self.level.active_sprites.update(self.level)
+                self.level.active_sprites.update(self.level, self.hero)
 
             if self.level.completed:
                 self.stage = Game.COMPLETE
@@ -497,6 +520,7 @@ class Game():
                 self.active_layer.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
 
             self.window.blit(self.background_layer, [offset_x / 3, offset_y])
+            self.window.blit(self.scenery_layer, [offset_x / 2, offset_y])
             self.window.blit(self.inactive_layer, [offset_x, offset_y])
             self.window.blit(self.active_layer, [offset_x, offset_y])
             self.window.blit(self.stats_layer, [0, 0])
@@ -524,7 +548,7 @@ def main():
     ''' blocks '''
     blocks = pygame.sprite.Group()
      
-    for i in range(0, WIDTH * 2, 64):
+    for i in range(0, WIDTH * 200, 64):
         b = Block(i, 576, block_img)
         blocks.add(b)
 
@@ -567,6 +591,10 @@ def main():
     enemies.add(Monster(832, 512, monster_img))
     enemies.add(Slime(1152, 128, slime_img))
 
+    for i in range(200):
+        r = random.randint(3000, 50000)
+        enemies.add(Monster(r, 512, monster_img))
+        
     ''' powerups '''
     powerups = pygame.sprite.Group()
 
@@ -584,8 +612,8 @@ def main():
     level = Level(blocks, coins, enemies, powerups, flag)
 
     # Start game
-    game = Game(hero, level)
-    game.start()
+    game = Game(hero)
+    game.start(level)
     game.loop()
 
 
