@@ -22,6 +22,7 @@ asdf
 - Give points for completing a level
 - Create invincibility (star) power-up
 - Create a power-up which increases the max hearts a player can have.
+- Track coins separately from the score. (They can still be worth points.) Give an extra live when a number of coins is earned. Reset the coins after a life is given.
 - Invent your own custom power-up.
 - Invent a "power-up" which has a negative consequence on a player other than reducing hearts or lives.
 - Display lives with a character icon x number of lives.
@@ -49,6 +50,9 @@ asdf
 - Show time on the stats layer. Give a time bonus for completing a level. Have the hero die if the level is not completed in a set amount of time.
 - Add secret parts of the level that utilize vertical scrolling.
 - Add ladders to the game. If a player is on a ladder, don't apply gravity. Assign vy by player input instead.
+- Put warp pipes or doors in a game. 
+- Put switches in the game that open areas of a level.
+- Put mystery blocks in the game.
 
 ### More!
 

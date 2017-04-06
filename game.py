@@ -104,7 +104,7 @@ class Character(Entity):
         elif self.rect.right > level.width:
             self.rect.right = level.width
     
-    def process_blocks(self, blocks):
+    def move_and_process_blocks(self, blocks):
         self.rect.x += self.vx
         hit_list = pygame.sprite.spritecollide(self, blocks, False)
 
@@ -151,6 +151,16 @@ class Character(Entity):
         
         return len(hit_list) > 0
 
+    def die(self):
+        self.lives -= 1
+        self.hearts = self.max_hearts
+
+    def update_status(self):
+        if self.hearts == 0:
+            self.die()
+        if self.invincibility > 0:            
+            self.invincibility -= 1
+
     def move_left(self):
         self.vx = -self.speed
         
@@ -169,27 +179,21 @@ class Character(Entity):
             self.vy = -1 * self.jump_power
             
         self.rect.y -= 1
-
-    def die(self):
-        self.lives -= 1
-        self.hearts = self.max_hearts
-    
+ 
     def update(self, level):
         self.apply_gravity(level)
+        self.move_and_process_blocks(level.blocks)
         self.check_world_boundaries(level)        
-        self.process_blocks(level.blocks)
+
         self.process_enemies(level.enemies)
         self.process_coins(level.coins)
         self.process_powerups(level.powerups)
 
+        self.update_status()
+        
         level.completed = self.check_flag(level.flag)
-        
-        if self.hearts == 0:
-            self.die()
-        if self.invincibility > 0:            
-            self.invincibility -= 1
 
-        
+
 class Coin(Entity):
     def __init__(self, x, y, image):
         super().__init__(x, y, image)
@@ -215,7 +219,7 @@ class Monster(Entity):
             self.rect.right = level.width
             self.vx *= -1
 
-    def process_blocks(self, blocks):
+    def move_and_process_blocks(self, blocks):
         self.rect.x += self.vx
         hit_list = pygame.sprite.spritecollide(self, blocks, False)
 
@@ -240,9 +244,8 @@ class Monster(Entity):
     
     def update(self, level):
         self.apply_gravity(level)
-        self.check_world_boundaries(level)        
-        self.process_blocks(level.blocks)
-    
+        self.move_and_process_blocks(level.blocks)
+        self.check_world_boundaries(level)       
 
 class Slime(Entity):
     def __init__(self, x, y, image):
@@ -262,7 +265,7 @@ class Slime(Entity):
             self.rect.right = level.width
             self.vx *= -1
 
-    def process_blocks(self, blocks):
+    def move_and_process_blocks(self, blocks):
         reverse = False
         
         self.rect.x += self.vx
@@ -296,8 +299,8 @@ class Slime(Entity):
     
     def update(self, level):
         self.apply_gravity(level)
+        self.move_and_process_blocks(level.blocks)
         self.check_world_boundaries(level)        
-        self.process_blocks(level.blocks)
     
 
 class OneUp(Entity):
