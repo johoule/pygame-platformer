@@ -16,6 +16,7 @@ asdf
 - Change point value for coins.
 - Make power-ups give points to player.
 - Make health display hearts/max.
+- Add a SOUND\_ON option. Have music and sound effects only play when SOUND\ON is set to True.
 
 ### Medium
 
