@@ -1,5 +1,6 @@
 import pygame
 
+pygame.mixer.pre_init(22050, -16, 2, 4096)
 pygame.init()
 
 # Window settings
@@ -47,11 +48,12 @@ slime_img = pygame.image.load("assets/slime.png")
 slime_img = pygame.transform.scale(slime_img, (64, 64))
 
 # Sounds
-music = None
-jump = None
-get_coin = None
-get_hit = None
-die = None
+MUSIC = None
+JUMP_SOUND = pygame.mixer.Sound("assets/jump.wav")
+COIN_SOUND = pygame.mixer.Sound("assets/pickup_coin.wav")
+POWERUP_SOUND = pygame.mixer.Sound("assets/powerup.wav")
+HIT_SOUND = None
+DIE_SOUND = None
 
 # Controls
 LEFT = pygame.K_LEFT
@@ -131,6 +133,7 @@ class Character(Entity):
         hit_list = pygame.sprite.spritecollide(self, coins, True)
 
         for coin in hit_list:
+            COIN_SOUND.play()
             self.score += coin.value
             
     def process_enemies(self, enemies):
@@ -144,6 +147,7 @@ class Character(Entity):
         hit_list = pygame.sprite.spritecollide(self, powerups, True)
 
         for p in hit_list:
+            POWERUP_SOUND.play()
             p.apply(self)
 
     def check_flag(self, flag):
@@ -446,6 +450,7 @@ class Game():
                     
                 elif self.stage == Game.PLAYING:
                     if event.key == JUMP:
+                        JUMP_SOUND.play()
                         self.hero.jump(self.level.blocks)
                         
                 elif self.stage == Game.COMPLETE:
