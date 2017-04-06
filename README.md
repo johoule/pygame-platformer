@@ -11,7 +11,8 @@ asdf
 - Change the dimensions of the game window.
 - Name your game.
 - Find your own custom artwork.
-- Choose your own fonts.
+- Find your own fonts.
+- Find your own sound effects and music.
 - Change point value for coins.
 - Make power-ups give points to player.
 - Make health display hearts/max.
