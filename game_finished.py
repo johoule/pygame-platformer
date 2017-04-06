@@ -28,6 +28,9 @@ block_img = pygame.transform.scale(block_img, (64, 64))
 coin_img = pygame.image.load("assets/coin.png")
 coin_img = pygame.transform.scale(coin_img, (64, 64))
 
+heart_img = pygame.image.load("assets/health_potion.png")
+heart_img = pygame.transform.scale(heart_img, (64, 64))
+
 oneup_img = pygame.image.load("assets/oneup_potion.png")
 oneup_img = pygame.transform.scale(oneup_img, (64, 64))
 
@@ -305,6 +308,15 @@ class OneUp(Entity):
         character.lives += 1
 
 
+class Heart(Entity):
+    def __init__(self, x, y, image):
+        super().__init__(x, y, image)
+
+    def apply(self, character):
+        character.hearts += 1
+        character.hearts = max(character.hearts, character.max_hearts)
+
+        
 class Star(Entity):
     def __init__(self, x, y, image):
         super().__init__(x, y, image)
@@ -550,7 +562,8 @@ def main():
     ''' powerups '''
     powerups = pygame.sprite.Group()
 
-    powerups.add(OneUp(1152, 128, oneup_img))
+    powerups.add(OneUp(448, 256, oneup_img))
+    powerups.add(Heart(1152, 128, heart_img))
 
     ''' goal '''
     flag = pygame.sprite.Group()
