@@ -548,7 +548,7 @@ def main():
     ''' blocks '''
     blocks = pygame.sprite.Group()
      
-    for i in range(0, WIDTH * 200, 64):
+    for i in range(0, WIDTH * 100, 64):
         b = Block(i, 576, block_img)
         blocks.add(b)
 
@@ -591,7 +591,7 @@ def main():
     enemies.add(Monster(832, 512, monster_img))
     enemies.add(Slime(1152, 128, slime_img))
 
-    for i in range(200):
+    for i in range(100):
         r = random.randint(3000, 50000)
         enemies.add(Monster(r, 512, monster_img))
         
