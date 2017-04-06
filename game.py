@@ -1,5 +1,6 @@
 import pygame
 import random
+import copy
 
 pygame.mixer.pre_init(22050, -16, 2, 4096)
 pygame.init()
@@ -55,8 +56,8 @@ background_img = pygame.transform.scale(background_img, (w, HEIGHT))
 
 scenery_img = pygame.image.load("assets/forest.png")
 h = scenery_img.get_height()
-w = int(scenery_img.get_width() * HEIGHT / h // 2)
-scenery_img = pygame.transform.scale(scenery_img, (w, HEIGHT // 2))
+w = int(scenery_img.get_width() * HEIGHT / h)
+scenery_img = pygame.transform.scale(scenery_img, (w, HEIGHT))
 
 # Sounds
 pygame.mixer.music.load("assets/theme_of_the wanderer.ogg")
@@ -64,8 +65,9 @@ pygame.mixer.music.load("assets/theme_of_the wanderer.ogg")
 JUMP_SOUND = pygame.mixer.Sound("assets/jump.wav")
 COIN_SOUND = pygame.mixer.Sound("assets/pickup_coin.wav")
 POWERUP_SOUND = pygame.mixer.Sound("assets/powerup.wav")
-HIT_SOUND = None
-DIE_SOUND = None
+HURT_SOUND = pygame.mixer.Sound("assets/hurt.ogg")
+DIE_SOUND = pygame.mixer.Sound("assets/death.wav")
+GAMEOVER_SOUND = pygame.mixer.Sound("assets/game_over.wav")
 
 # Controls
 LEFT = pygame.K_LEFT
@@ -152,6 +154,7 @@ class Character(Entity):
         hit_list = pygame.sprite.spritecollide(self, enemies, False)
 
         if len(hit_list) > 0 and self.invincibility == 0:
+            HURT_SOUND.play()
             self.hearts -= 1
             self.invincibility = int(0.5 * FPS)
 
@@ -169,8 +172,17 @@ class Character(Entity):
 
     def die(self):
         self.lives -= 1
-        self.hearts = self.max_hearts
 
+        if self.lives > 0:
+            DIE_SOUND.play()
+        else:
+            GAMEOVER_SOUND.play()
+            
+    def respawn(self, level):
+        self.rect.x = level.start_x
+        self.rect.y = level.start_y
+        self.hearts = self.max_hearts
+                
     def update_status(self):
         if self.hearts == 0:
             self.die()
@@ -363,14 +375,18 @@ class Level():
         self.powerups = powerups
         self.flag = flag
 
+        self.starting_coins = copy.deepcopy(coins)
+        self.starting_enemies = copy.deepcopy(enemies)
+        self.starting_powerups = copy.deepcopy(powerups)
+
         self.active_sprites = pygame.sprite.Group()
-        self.active_sprites.add(coins, enemies, powerups)
+        self.active_sprites.add(self.coins, self.enemies, self.powerups)
 
         self.inactive_sprites = pygame.sprite.Group()
         self.inactive_sprites.add(blocks, flag)
 
-        self.width = 1920
-        self.height = 640
+        self.width, self.height = 1920, 640
+        self.start_x, self.start_y = 500, 512
         
         self.completed = False
         self.gravity = 1
@@ -395,6 +411,7 @@ class Game():
         
     def start(self, level):
         self.level = level
+        self.hero.respawn(self.level)
         
         self.background_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
         self.scenery_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
@@ -408,7 +425,7 @@ class Game():
             self.background_layer.blit(background_img, [i, 0])
         
         for i in range(0, level.width, scenery_img.get_width()):
-            self.scenery_layer.blit(scenery_img, [i, HEIGHT // 2])
+            self.scenery_layer.blit(scenery_img, [i, 0])
         
         self.level.inactive_sprites.draw(self.inactive_layer)
         
@@ -507,6 +524,9 @@ class Game():
 
             if self.hero.lives == 0:
                 self.stage = Game.GAME_OVER
+                pygame.mixer.music.stop()
+            elif self.hero.hearts == 0:
+                self.hero.respawn(self.level)
 
             self.update_stats()
             
