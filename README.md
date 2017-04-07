@@ -16,10 +16,12 @@ asdf
 - Change point value for coins.
 - Make power-ups give points to player.
 - Make health display hearts/max.
+- Add prizes other than coins and give them a point value.
 - Add a SOUND\_ON option. Have music and sound effects only play when SOUND\_ON is set to True.
 
 ### Medium
 
+- Let the 'S' key toggle sound on and off. Show a little speaker/mute icon to indicate the current state of sound.
 - Create your own custom artwork.
 - Give points for completing a level
 - Create invincibility (star) power-up
@@ -28,7 +30,7 @@ asdf
 - Invent your own custom power-up.
 - Invent a "power-up" which has a negative consequence on a player other than reducing hearts or lives.
 - Display lives with a character icon x number of lives.
-- Make a player die when they fall through the bottom of the world.
+- Make a player die when they fall through the bottom of the world. You'll need to make sure enemies that fall through are also removed from the game. Pygame's sprite kill() fuction will be useful for this.
 - Make a cool credits layer for when the player wins the game.
 - Add a 'Pause' stage to the game which is activated when the player presses 'P' (or a button on the joystick). All movement and time should stop during a pause stage. Pressing 'P' again should resume. Be sure to show a message indicating the game is paused.
 - Create a custom splash screen.
@@ -42,6 +44,7 @@ asdf
 - Customize the foreground layer for a level.
 - Animate your custom sprites.
 - Change the game so that it uses the XBox controller instead of the keyboard.
+- Kill enemies when you land on them. You'll need to check which direction you hit the enemy from in process enemies. Award different point values for different enemy types.
 
 ### How clever are you?
 
@@ -52,7 +55,7 @@ asdf
 - Show time on the stats layer. Give a time bonus for completing a level. Have the hero die if the level is not completed in a set amount of time.
 - Add secret parts of the level that utilize vertical scrolling.
 - Add ladders to the game. If a player is on a ladder, don't apply gravity. Assign vy by player input instead.
-- Put warp pipes or doors in a game. 
+- Put warp pipes or doors in the game. 
 - Put switches in the game that open areas of a level.
 - Put mystery blocks in the game.
 

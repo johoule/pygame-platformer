@@ -581,6 +581,7 @@ class Game():
 
             if self.stage == Game.START:
                 self.window.blit(self.splash_layer, [0, 0])
+                pass
             elif self.stage == Game.COMPLETE:
                 self.display_message("Level Complete", "Press 'C' to continue.")
             elif self.stage == Game.GAME_OVER:
