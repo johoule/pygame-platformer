@@ -13,13 +13,14 @@ FPS = 60
 
 # Colors
 TRANSPARENT = (0, 0, 0, 0)
-SKY_BLUE = (135, 206, 235)
-BLACK = (0, 0, 0)
+DARK_CHALKY_BLUE = (16, 86, 103)
+SKY_BLUE = (87, 0, 235)
+WHITE = (255, 255, 255)
 
 # Fonts
-FONT_SM = pygame.font.Font("assets/fonts/prstart.ttf", 16)
-FONT_MD = pygame.font.Font("assets/fonts/prstart.ttf", 32)
-FONT_LG = pygame.font.Font("assets/fonts/prstart.ttf", 64)
+FONT_SM = pygame.font.Font("assets/fonts/minya_nouvelle_bd.ttf", 32)
+FONT_MD = pygame.font.Font("assets/fonts/minya_nouvelle_bd.ttf", 64)
+FONT_LG = pygame.font.Font("assets/fonts/thats_super.ttf", 72)
 
 # Images
 hero_img = pygame.image.load("assets/character/adventurer_walk1.png")
@@ -459,8 +460,8 @@ class Game():
         
         self.level.inactive_sprites.draw(self.inactive_layer)
         
-        line1 = FONT_LG.render(TITLE, 1, BLACK)
-        line2 = FONT_SM.render("Press any key to start.", 1, BLACK)
+        line1 = FONT_LG.render(TITLE, 1, DARK_CHALKY_BLUE)
+        line2 = FONT_SM.render("Press any key to start.", 1, WHITE)
 
         x1 = WIDTH / 2 - line1.get_width() / 2;
         y1 = HEIGHT / 3 - line1.get_height() / 2;
@@ -472,8 +473,8 @@ class Game():
         self.splash_layer.blit(line2, (x2, y2))
 
     def display_message(self, primary_text, secondary_text):
-        line1 = FONT_MD.render(primary_text, 1, BLACK)
-        line2 = FONT_SM.render(secondary_text, 1, BLACK)
+        line1 = FONT_MD.render(primary_text, 1, WHITE)
+        line2 = FONT_SM.render(secondary_text, 1, WHITE)
 
         x1 = WIDTH / 2 - line1.get_width() / 2;
         y1 = HEIGHT / 3 - line1.get_height() / 2;
@@ -485,9 +486,9 @@ class Game():
         self.window.blit(line2, (x2, y2))
     
     def update_stats(self):
-        hearts_text = FONT_SM.render("Hearts: " + str(self.hero.hearts), 1, BLACK)
-        lives_text = FONT_SM.render("Lives: " + str(self.hero.lives), 1, BLACK)
-        score_text = FONT_SM.render("Score: " + str(self.hero.score), 1, BLACK)
+        hearts_text = FONT_SM.render("Hearts: " + str(self.hero.hearts), 1, WHITE)
+        lives_text = FONT_SM.render("Lives: " + str(self.hero.lives), 1, WHITE)
+        score_text = FONT_SM.render("Score: " + str(self.hero.score), 1, WHITE)
 
         self.stats_layer.fill(TRANSPARENT)
         self.stats_layer.blit(score_text, (WIDTH - score_text.get_width() - 32, 32))
