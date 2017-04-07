@@ -416,7 +416,7 @@ class Level():
         self.inactive_sprites = pygame.sprite.Group()
         self.inactive_sprites.add(blocks, flag)
 
-        self.width, self.height = 1920, 640
+        self.width, self.height = 2048, 640
         self.start_x, self.start_y = 500, 512
         
         self.completed = False
@@ -655,10 +655,10 @@ def main():
 
     ''' goal '''
     flag = pygame.sprite.Group()
-    flag.add(Flag(1856, 320, flag_img))
-    flag.add(Flag(1856, 384, flagpole_img))
-    flag.add(Flag(1856, 448, flagpole_img))
-    flag.add(Flag(1856, 512, flagpole_img))
+    flag.add(Flag(1920, 320, flag_img))
+    flag.add(Flag(1920, 384, flagpole_img))
+    flag.add(Flag(1920, 448, flagpole_img))
+    flag.add(Flag(1920, 512, flagpole_img))
 
     # Make a level
     level = Level(blocks, coins, enemies, powerups, flag)
