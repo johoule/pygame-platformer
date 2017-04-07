@@ -57,8 +57,10 @@ monster_img1 = pygame.transform.scale(monster_img1, (64, 64))
 monster_img2 = pygame.transform.scale(monster_img2, (64, 64))
 monster_images = [monster_img1, monster_img2]
 
-slime_img = pygame.image.load("assets/enemies/slime.png")
-slime_img = pygame.transform.scale(slime_img, (64, 64))
+bear_img1 = pygame.image.load("assets/enemies/bear-1.png")
+bear_img1 = pygame.transform.scale(bear_img1, (64, 64))
+bear_img2 = pygame.transform.flip(bear_img1, 1, 0)
+bear_images = [bear_img1, bear_img2]
 
 background_img = pygame.image.load("assets/backgrounds/mountains.png")
 h = background_img.get_height()
@@ -247,7 +249,7 @@ class Coin(Entity):
         self.value = 1
 
         
-class Monster(Entity):
+class Bear(Entity):
     def __init__(self, x, y, images):
         super().__init__(x, y, images[0])
 
@@ -255,9 +257,6 @@ class Monster(Entity):
         
         self.vx = -2
         self.vy = 0
-
-        self.ticks = 0
-        self.current = 0
 
     def apply_gravity(self, level):
         self.vy += level.gravity
@@ -294,11 +293,12 @@ class Monster(Entity):
                 self.vy = 0
 
     def update_image(self):
-        if self.ticks == 0:
-            self.image.blit(self.images[self.current], [0, 0])
-            self.current = (self.current + 1) % len(self.images)
-            
-        self.ticks = (self.ticks + 1) % (FPS / 3)
+        self.image.fill(TRANSPARENT)
+        
+        if self.vx < 0:
+            self.image.blit(self.images[0], [0, 0])
+        else:
+            self.image.blit(self.images[1], [0, 0])
         
     def update(self, level, hero):
         distance = abs(self.rect.x - hero.rect.x)
@@ -308,14 +308,19 @@ class Monster(Entity):
             self.move_and_process_blocks(level.blocks)
             self.check_world_boundaries(level)
             self.update_image()
+            
+class Monster(Entity):
+    def __init__(self, x, y, images):
+        super().__init__(x, y, images[0])
 
-class Slime(Entity):
-    def __init__(self, x, y, image):
-        super().__init__(x, y, image)
-
+        self.images = images
+        
         self.vx = -2
         self.vy = 0
 
+        self.ticks = 0
+        self.current = 0
+        
     def apply_gravity(self, level):
         self.vy += level.gravity
     
@@ -359,13 +364,22 @@ class Slime(Entity):
         if reverse:
             self.vx *= -1
     
+    def update_image(self):
+        if self.ticks == 0:
+            self.image.fill(TRANSPARENT)
+            self.image.blit(self.images[self.current], [0, 0])
+            self.current = (self.current + 1) % len(self.images)
+            
+        self.ticks = (self.ticks + 1) % (FPS / 3)
+
     def update(self, level, hero):
         distance = abs(self.rect.x - hero.rect.x)
 
         if distance < 2 * WIDTH:
             self.apply_gravity(level)
             self.move_and_process_blocks(level.blocks)
-            self.check_world_boundaries(level)           
+            self.check_world_boundaries(level)
+            self.update_image()
 
 class OneUp(Entity):
     def __init__(self, x, y, image):
@@ -382,14 +396,6 @@ class Heart(Entity):
     def apply(self, character):
         character.hearts += 1
         character.hearts = max(character.hearts, character.max_hearts)
-
-        
-class Star(Entity):
-    def __init__(self, x, y, image):
-        super().__init__(x, y, image)
-
-    def apply(self, character):
-        character.invincibility = 4 * FPS
 
         
 class Flag(Entity):
@@ -496,15 +502,12 @@ class Game():
         self.stats_layer.blit(lives_text, (32, 64))
 
     def calculate_offset(self):
-        active_rect = self.active_layer.get_rect()
-        hero_rect = self.hero.rect
-        
-        x = -1 * hero_rect.centerx + WIDTH / 2
+        x = -1 * self.hero.rect.centerx + WIDTH / 2
 
-        if hero_rect.centerx < WIDTH / 2:
+        if self.hero.rect.centerx < WIDTH / 2:
             x = 0
-        elif hero_rect.centerx > active_rect.right - WIDTH / 2:
-            x = -1 * active_rect.right + WIDTH
+        elif self.hero.rect.centerx > self.level.width - WIDTH / 2:
+            x = -1 * self.level.width + WIDTH
 
         return x, 0
 
@@ -548,7 +551,6 @@ class Game():
             # Game Logic
             if self.stage == Game.PLAYING:
                 self.hero.update(self.level)
-                self.level.coins.update()
                 self.level.enemies.update(self.level, self.hero)
 
             if self.level.completed:
@@ -639,9 +641,9 @@ def main():
     ''' enemies '''
     enemies = pygame.sprite.Group()
 
-    enemies.add(Monster(512, 256, monster_images))
-    enemies.add(Monster(832, 512, monster_images))
-    enemies.add(Slime(1152, 128, slime_img))
+    enemies.add(Bear(512, 256, bear_images))
+    enemies.add(Bear(832, 512, bear_images))
+    enemies.add(Monster(1152, 128, monster_images))
 
     for i in range(200):
         r = random.randint(3000, 50000)
