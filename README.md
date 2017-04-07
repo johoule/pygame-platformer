@@ -3,6 +3,7 @@
 ## About
 
 ![NoG 2K'17](/nog2k17.png | width=300)
+<img src="/nog2k17.png" width="300">
 
 ## Ideas for student projects
 
