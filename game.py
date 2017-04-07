@@ -22,7 +22,7 @@ FONT_MD = pygame.font.Font("assets/fonts/prstart.ttf", 32)
 FONT_LG = pygame.font.Font("assets/fonts/prstart.ttf", 64)
 
 # Images
-hero_img = pygame.image.load("assets/character/player.png")
+hero_img = pygame.image.load("assets/character/adventurer_walk1.png")
 hero_img = pygame.transform.scale(hero_img, (64, 64))
 
 TL = pygame.image.load("assets/tiles/top_left.png")
@@ -32,15 +32,16 @@ ER = pygame.image.load("assets/tiles/end_right.png")
 EL = pygame.image.load("assets/tiles/end_left.png")
 TP = pygame.image.load("assets/tiles/top.png")
 CN = pygame.image.load("assets/tiles/center.png")
+LF = pygame.image.load("assets/tiles/lone_float.png")
 SP = pygame.image.load("assets/tiles/special.png")
 
-coin_img = pygame.image.load("assets/items/gold_1.png")
+coin_img = pygame.image.load("assets/items/coin.png")
 coin_img = pygame.transform.scale(coin_img, (64, 64))
 
-heart_img = pygame.image.load("assets/items/health_potion.png")
+heart_img = pygame.image.load("assets/items/bandaid.png")
 heart_img = pygame.transform.scale(heart_img, (64, 64))
 
-oneup_img = pygame.image.load("assets/items/oneup_potion.png")
+oneup_img = pygame.image.load("assets/items/first_aid.png")
 oneup_img = pygame.transform.scale(oneup_img, (64, 64))
 
 flag_img = pygame.image.load("assets/items/flag.png")
@@ -49,8 +50,11 @@ flag_img = pygame.transform.scale(flag_img, (64, 64))
 flagpole_img = pygame.image.load("assets/items/flagpole.png")
 flagpole_img = pygame.transform.scale(flagpole_img, (64, 64))
 
-monster_img = pygame.image.load("assets/enemies/monster.png")
-monster_img = pygame.transform.scale(monster_img, (64, 64))
+monster_img1 = pygame.image.load("assets/enemies/monster-1.png")
+monster_img2 = pygame.image.load("assets/enemies/monster-2.png")
+monster_img1 = pygame.transform.scale(monster_img1, (64, 64))
+monster_img2 = pygame.transform.scale(monster_img2, (64, 64))
+monster_images = [monster_img1, monster_img2]
 
 slime_img = pygame.image.load("assets/enemies/slime.png")
 slime_img = pygame.transform.scale(slime_img, (64, 64))
@@ -87,14 +91,15 @@ class Entity(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
         super().__init__()
 
-        self.image = pygame.Surface([64, 64], pygame.SRCALPHA, 32)
+        size = [image.get_width(), image.get_height()]
+        
+        self.image = pygame.Surface(size, pygame.SRCALPHA, 32)
         self.image.blit(image, [0, 0])
 
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
 
-        
 class Block(Entity):
     
     def __init__(self, x, y, image):
@@ -240,13 +245,18 @@ class Coin(Entity):
 
         self.value = 1
 
-
+        
 class Monster(Entity):
-    def __init__(self, x, y, image):
-        super().__init__(x, y, image)
+    def __init__(self, x, y, images):
+        super().__init__(x, y, images[0])
 
+        self.images = images
+        
         self.vx = -2
         self.vy = 0
+
+        self.ticks = 0
+        self.current = 0
 
     def apply_gravity(self, level):
         self.vy += level.gravity
@@ -281,14 +291,22 @@ class Monster(Entity):
             elif self.vy < 0:
                 self.rect.top = block.rect.bottom
                 self.vy = 0
-    
+
+    def update_image(self):
+        if self.ticks == 0:
+            self.image.blit(self.images[self.current], [0, 0])
+            self.current = (self.current + 1) % len(self.images)
+            
+        self.ticks = (self.ticks + 1) % (FPS / 3)
+        
     def update(self, level, hero):
         distance = abs(self.rect.x - hero.rect.x)
 
         if distance < 2 * WIDTH:
             self.apply_gravity(level)
             self.move_and_process_blocks(level.blocks)
-            self.check_world_boundaries(level)       
+            self.check_world_boundaries(level)
+            self.update_image()
 
 class Slime(Entity):
     def __init__(self, x, y, image):
@@ -529,7 +547,8 @@ class Game():
             # Game Logic
             if self.stage == Game.PLAYING:
                 self.hero.update(self.level)
-                self.level.active_sprites.update(self.level, self.hero)
+                self.level.coins.update()
+                self.level.enemies.update(self.level, self.hero)
 
             if self.level.completed:
                 self.stage = Game.COMPLETE
@@ -591,8 +610,8 @@ def main():
     blocks.add(Block(448, 320, EL))
     blocks.add(Block(512, 320, ER))
     
-    blocks.add(Block(792, 448, SP))
-    blocks.add(Block(896, 320, SP))
+    blocks.add(Block(792, 448, LF))
+    blocks.add(Block(896, 320, LF))
 
     blocks.add(Block(1024, 192, EL))
     blocks.add(Block(1088, 192, TM))
@@ -619,13 +638,13 @@ def main():
     ''' enemies '''
     enemies = pygame.sprite.Group()
 
-    enemies.add(Monster(512, 256, monster_img))
-    enemies.add(Monster(832, 512, monster_img))
+    enemies.add(Monster(512, 256, monster_images))
+    enemies.add(Monster(832, 512, monster_images))
     enemies.add(Slime(1152, 128, slime_img))
 
     for i in range(200):
         r = random.randint(3000, 50000)
-        enemies.add(Monster(r, 512, monster_img))
+        enemies.add(Monster(r, 512, monster_images))
         
     ''' powerups '''
     powerups = pygame.sprite.Group()
