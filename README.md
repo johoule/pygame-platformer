@@ -1,7 +1,7 @@
 # Pygame Platformer
 
 ## About
-<img src="/nog2k17.png" width="300">
+<img src="/nog2k17.png" width="360">
 
 ## Ideas for student projects
 
