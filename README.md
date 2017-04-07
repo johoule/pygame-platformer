@@ -2,7 +2,7 @@
 
 ## About
 
-asdf
+![NoG 2K'17](/nog2k17.png)
 
 ## Ideas for student projects
 
