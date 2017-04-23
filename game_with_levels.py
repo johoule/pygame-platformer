@@ -249,16 +249,19 @@ class Bear(Entity):
         self.vx = -2
         self.vy = 0
 
+    def reverse(self):
+        self.vx *= -1
+
     def apply_gravity(self, level):
         self.vy += level.gravity
 
     def check_world_boundaries(self, level):
         if self.rect.left < 0:
             self.rect.left = 0
-            self.vx *= -1
+            self.reverse()
         elif self.rect.right > level.width:
             self.rect.right = level.width
-            self.vx *= -1
+            self.reverse()
 
     def move_and_process_blocks(self, blocks):
         self.rect.x += self.vx
@@ -267,10 +270,10 @@ class Bear(Entity):
         for block in hit_list:
             if self.vx > 0:
                 self.rect.right = block.rect.left
-                self.vx *= -1
+                self.reverse()
             elif self.vx < 0:
                 self.rect.left = block.rect.right
-                self.vx *= -1
+                self.reverse()
 
         self.rect.y += self.vy
         hit_list = pygame.sprite.spritecollide(self, blocks, False)
@@ -312,16 +315,19 @@ class Monster(Entity):
         self.ticks = 0
         self.current = 0
 
+    def reverse(self):
+        self.vx *= -1
+
     def apply_gravity(self, level):
         self.vy += level.gravity
 
     def check_world_boundaries(self, level):
         if self.rect.left < 0:
             self.rect.left = 0
-            self.vx *= -1
+            self.reverse()
         elif self.rect.right > level.width:
             self.rect.right = level.width
-            self.vx *= -1
+            self.reverse()
 
     def move_and_process_blocks(self, blocks):
         reverse = False
@@ -332,10 +338,10 @@ class Monster(Entity):
         for block in hit_list:
             if self.vx > 0:
                 self.rect.right = block.rect.left
-                self.vx *= -1
+                self.reverse()
             elif self.vx < 0:
                 self.rect.left = block.rect.right
-                self.vx *= -1
+                self.reverse()
 
         self.rect.y += self.vy
         hit_list = pygame.sprite.spritecollide(self, blocks, False)
@@ -343,17 +349,22 @@ class Monster(Entity):
         reverse = True
 
         for block in hit_list:
-            self.rect.bottom = block.rect.top
-            self.vy = 0
+            if self.vy >= 0:
+                self.rect.bottom = block.rect.top
+                self.vy = 0
 
-            if self.vx > 0 and self.rect.right <= block.rect.right:
-                reverse = False
+                if self.vx > 0 and self.rect.right <= block.rect.right:
+                    reverse = False
 
-            elif self.vx < 0 and self.rect.left >= block.rect.left:
-                reverse = False
+                elif self.vx < 0 and self.rect.left >= block.rect.left:
+                    reverse = False
+
+            elif self.vy < 0:
+                self.rect.top = block.rect.bottom
+                self.vy = 0
 
         if reverse:
-            self.vx *= -1
+            self.reverse()
 
     def update_image(self):
         if self.ticks == 0:
@@ -453,6 +464,8 @@ class Level():
 
         self.completed = False
 
+    def reset(self):
+        pass
 
 class Game():
 
@@ -596,7 +609,7 @@ class Game():
             self.stage = Game.GAME_OVER
             pygame.mixer.music.stop()
         elif self.hero.hearts == 0:
-            pass
+            self.hero.respawn(self.level)
 
     def draw(self):
         offset_x, offset_y = self.calculate_offset()
