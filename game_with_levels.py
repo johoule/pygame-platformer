@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
-import pygame
-import random
 import json
-import copy
+import pygame
 import sys
 
-pygame.mixer.pre_init(22050, -16, 2, 4096)
+pygame.mixer.pre_init()
 pygame.init()
 
 # Window settings
@@ -16,10 +14,12 @@ HEIGHT = 640
 FPS = 60
 GRID_SIZE = 64
 
+# Levels
+levels = ["level-1.json"]
+
 # Colors
 TRANSPARENT = (0, 0, 0, 0)
-DARK_CHALKY_BLUE = (16, 86, 103)
-SKY_BLUE = (87, 0, 235)
+DARK_BLUE = (16, 86, 103)
 WHITE = (255, 255, 255)
 
 # Fonts
@@ -56,9 +56,8 @@ monster_img1 = load_image("assets/enemies/monster-1.png")
 monster_img2 = load_image("assets/enemies/monster-2.png")
 monster_images = [monster_img1, monster_img2]
 
-bear_img1 = load_image("assets/enemies/bear-1.png")
-bear_img2 = pygame.transform.flip(bear_img1, 1, 0)
-bear_images = [bear_img1, bear_img2]
+bear_img = load_image("assets/enemies/bear-1.png")
+bear_images = [bear_img]
 
 # Sounds
 pygame.mixer.music.load("assets/sounds/theme_of_the wanderer.ogg")
@@ -71,17 +70,12 @@ DIE_SOUND = pygame.mixer.Sound("assets/sounds/death.wav")
 LEVELUP_SOUND = pygame.mixer.Sound("assets/sounds/level_up.wav")
 GAMEOVER_SOUND = pygame.mixer.Sound("assets/sounds/game_over.wav")
 
-
 class Entity(pygame.sprite.Sprite):
 
     def __init__(self, x, y, image):
         super().__init__()
 
-        size = [image.get_width(), image.get_height()]
-
-        self.image = pygame.Surface(size, pygame.SRCALPHA, 32)
-        self.image.blit(image, [0, 0])
-
+        self.image = image
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
@@ -107,6 +101,26 @@ class Character(Entity):
         self.hearts = 3
         self.max_hearts = 3
         self.invincibility = 0
+
+    def move_left(self):
+        self.vx = -self.speed
+
+    def move_right(self):
+        self.vx = self.speed
+
+    def stop(self):
+        self.vx = 0
+
+    def jump(self, blocks):
+        self.rect.y += 1
+
+        hit_list = pygame.sprite.spritecollide(self, blocks, False)
+
+        if len(hit_list) > 0:
+            self.vy = -1 * self.jump_power
+            JUMP_SOUND.play()
+
+        self.rect.y -= 1
 
     def apply_gravity(self, level):
         self.vy += level.gravity
@@ -153,7 +167,7 @@ class Character(Entity):
         if len(hit_list) > 0 and self.invincibility == 0:
             HURT_SOUND.play()
             self.hearts -= 1
-            self.invincibility = int(0.5 * FPS)
+            self.invincibility = int(0.75 * FPS)
 
     def process_powerups(self, powerups):
         hit_list = pygame.sprite.spritecollide(self, powerups, True)
@@ -162,12 +176,13 @@ class Character(Entity):
             POWERUP_SOUND.play()
             p.apply(self)
 
-    def check_flag(self, flag):
-        hit_list = pygame.sprite.spritecollide(self, flag, False)
+    def check_flag(self, level):
+        hit_list = pygame.sprite.spritecollide(self, level.flag, False)
 
         got_it = len(hit_list) > 0
 
         if got_it:
+            level.completed = True
             LEVELUP_SOUND.play()
 
         return got_it
@@ -185,44 +200,22 @@ class Character(Entity):
         self.rect.y = level.start_y
         self.hearts = self.max_hearts
 
-    def update_status(self):
-        if self.hearts == 0:
-            self.die()
-        if self.invincibility > 0:
-            self.invincibility -= 1
-
-    def move_left(self):
-        self.vx = -self.speed
-
-    def move_right(self):
-        self.vx = self.speed
-
-    def stop(self):
-        self.vx = 0
-
-    def jump(self, blocks):
-        self.rect.y += 1
-
-        hit_list = pygame.sprite.spritecollide(self, blocks, False)
-
-        if len(hit_list) > 0:
-            self.vy = -1 * self.jump_power
-            JUMP_SOUND.play()
-
-        self.rect.y -= 1
-
     def update(self, level):
         self.apply_gravity(level)
         self.move_and_process_blocks(level.blocks)
         self.check_world_boundaries(level)
-
         self.process_enemies(level.enemies)
-        self.process_coins(level.coins)
-        self.process_powerups(level.powerups)
 
-        self.update_status()
+        if self.hearts > 0:
+            self.process_coins(level.coins)
+            self.process_powerups(level.powerups)
+            self.check_flag(level)
 
-        level.completed = self.check_flag(level.flag)
+            if self.invincibility > 0:
+                self.invincibility -= 1
+
+        else:
+            self.die()
 
 class Coin(Entity):
     def __init__(self, x, y, image):
@@ -230,19 +223,25 @@ class Coin(Entity):
 
         self.value = 1
 
-class Bear(Entity):
+class Enemy(Entity):
     def __init__(self, x, y, images):
         super().__init__(x, y, images[0])
 
-        self.images = images
-
-        self.start_x = x
-        self.start_y = y
-        self.vx = -2
-        self.vy = 0
+        self.images_left = images
+        self.images_right = [pygame.transform.flip(img, 1, 0) for img in images]
+        self.current_images = self.images_left
+        self.image_index = 0
+        self.ticks = 0
 
     def reverse(self):
         self.vx *= -1
+
+        if self.vx < 0:
+            self.current_images = self.images_left
+        else:
+            self.current_images = self.images_right
+
+        self.image = self.current_images[self.image_index]
 
     def apply_gravity(self, level):
         self.vy += level.gravity
@@ -254,6 +253,46 @@ class Bear(Entity):
         elif self.rect.right > level.width:
             self.rect.right = level.width
             self.reverse()
+
+    def move_and_process_blocks(self):
+        pass
+
+    def step_images(self):
+        if self.ticks == 0:
+            self.image = self.current_images[self.image_index]
+            self.image_index = (self.image_index + 1) % len(self.current_images)
+
+        self.ticks = (self.ticks + 1) % (FPS / 3)
+
+    def is_near(self, hero):
+        return abs(self.rect.x - hero.rect.x) < 2 * WIDTH
+
+    def update(self, level, hero):
+        if self.is_near(hero):
+            self.apply_gravity(level)
+            self.move_and_process_blocks(level.blocks)
+            self.check_world_boundaries(level)
+            self.step_images()
+
+    def reset(self):
+        self.rect.x = self.start_x
+        self.rect.y = self.start_y
+        self.vx = self.start_vx
+        self.vy = self.start_vy
+        self.image = self.images_left[0]
+        self.ticks = 0
+
+class Bear(Enemy):
+    def __init__(self, x, y, images):
+        super().__init__(x, y, images)
+
+        self.start_x = x
+        self.start_y = y
+        self.start_vx = -2
+        self.start_vy = 0
+
+        self.vx = self.start_vx
+        self.vy = self.start_vy
 
     def move_and_process_blocks(self, blocks):
         self.rect.x += self.vx
@@ -278,59 +317,17 @@ class Bear(Entity):
                 self.rect.top = block.rect.bottom
                 self.vy = 0
 
-    def update_image(self):
-        self.image.fill(TRANSPARENT)
-
-        if self.vx < 0:
-            self.image.blit(self.images[0], [0, 0])
-        else:
-            self.image.blit(self.images[1], [0, 0])
-
-    def update(self, level, hero):
-        distance = abs(self.rect.x - hero.rect.x)
-
-        if distance < 2 * WIDTH:
-            self.apply_gravity(level)
-            self.move_and_process_blocks(level.blocks)
-            self.check_world_boundaries(level)
-            self.update_image()
-
-    def reset(self):
-        self.rect.x = self.start_x
-        self.rect.y = self.start_y
-        self.vx = -2
-        self.vy = 0
-
-class Monster(Entity):
+class Monster(Enemy):
     def __init__(self, x, y, images):
-        super().__init__(x, y, images[0])
-
-        self.images = images
-
-        self.vx = -2
-        self.vy = 0
+        super().__init__(x, y, images)
 
         self.start_x = x
         self.start_y = y
-        self.vx = -2
-        self.vy = 0
+        self.start_vx = -2
+        self.start_vy = 0
 
-        self.ticks = 0
-        self.current = 0
-
-    def reverse(self):
-        self.vx *= -1
-
-    def apply_gravity(self, level):
-        self.vy += level.gravity
-
-    def check_world_boundaries(self, level):
-        if self.rect.left < 0:
-            self.rect.left = 0
-            self.reverse()
-        elif self.rect.right > level.width:
-            self.rect.right = level.width
-            self.reverse()
+        self.vx = self.start_vx
+        self.vy = self.start_vy
 
     def move_and_process_blocks(self, blocks):
         reverse = False
@@ -369,28 +366,12 @@ class Monster(Entity):
         if reverse:
             self.reverse()
 
-    def update_image(self):
-        if self.ticks == 0:
-            self.image.fill(TRANSPARENT)
-            self.image.blit(self.images[self.current], [0, 0])
-            self.current = (self.current + 1) % len(self.images)
-
-        self.ticks = (self.ticks + 1) % (FPS / 3)
-
     def update(self, level, hero):
-        distance = abs(self.rect.x - hero.rect.x)
-
-        if distance < 2 * WIDTH:
+        if self.is_near(hero):
             self.apply_gravity(level)
             self.move_and_process_blocks(level.blocks)
             self.check_world_boundaries(level)
-            self.update_image()
-
-    def reset(self):
-        self.rect.x = self.start_x
-        self.rect.y = self.start_y
-        self.vx = -2
-        self.vy = 0
+            self.step_images()
 
 class OneUp(Entity):
     def __init__(self, x, y, image):
@@ -532,8 +513,9 @@ class Game():
     START = 0
     PLAYING = 1
     PAUSED = 2
-    COMPLETE = 3
-    GAME_OVER = 4
+    LEVEL_COMPLETED = 3
+    LOSE = 4
+    WIN = 5
 
     def __init__(self, levels):
         self.window = pygame.display.set_mode([WIDTH, HEIGHT])
@@ -559,7 +541,7 @@ class Game():
         pass
 
     def display_splash(self, surface):
-        line1 = FONT_LG.render(TITLE, 1, DARK_CHALKY_BLUE)
+        line1 = FONT_LG.render(TITLE, 1, DARK_BLUE)
         line2 = FONT_SM.render("Press any key to start.", 1, WHITE)
 
         x1 = WIDTH / 2 - line1.get_width() / 2;
@@ -593,16 +575,6 @@ class Game():
         surface.blit(hearts_text, (32, 32))
         surface.blit(lives_text, (32, 64))
 
-    def calculate_offset(self):
-        x = -1 * self.hero.rect.centerx + WIDTH / 2
-
-        if self.hero.rect.centerx < WIDTH / 2:
-            x = 0
-        elif self.hero.rect.centerx > self.level.width - WIDTH / 2:
-            x = -1 * self.level.width + WIDTH
-
-        return x, 0
-
     def process_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -617,7 +589,7 @@ class Game():
                     if event.key == pygame.K_SPACE:
                         self.hero.jump(self.level.blocks)
 
-                elif self.stage == Game.COMPLETE:
+                elif self.stage == Game.LEVEL_COMPLETED:
                     pass
 
                 elif self.stage == Game.GAME_OVER:
@@ -639,7 +611,7 @@ class Game():
             self.level.enemies.update(self.level, self.hero)
 
         if self.level.completed:
-            self.stage = Game.COMPLETE
+            self.stage = Game.LEVEL_COMPLETED
             pygame.mixer.music.stop()
         elif self.hero.lives == 0:
             self.stage = Game.GAME_OVER
@@ -647,6 +619,16 @@ class Game():
         elif self.hero.hearts == 0:
             self.level.reset()
             self.hero.respawn(self.level)
+
+    def calculate_offset(self):
+        x = -1 * self.hero.rect.centerx + WIDTH / 2
+
+        if self.hero.rect.centerx < WIDTH / 2:
+            x = 0
+        elif self.hero.rect.centerx > self.level.width - WIDTH / 2:
+            x = -1 * self.level.width + WIDTH
+
+        return x, 0
 
     def draw(self):
         offset_x, offset_y = self.calculate_offset()
@@ -670,9 +652,9 @@ class Game():
             self.display_splash(self.window)
         elif self.stage == Game.PAUSED:
             pass
-        elif self.stage == Game.COMPLETE:
+        elif self.stage == Game.LEVEL_COMPLETED:
             self.display_message(self.window, "Level Complete", "Press 'C' to continue.")
-        elif self.stage == Game.GAME_OVER:
+        elif self.stage == Game.LOSE:
             self.display_message(self.window, "Game Over", "Press 'R' to restart.")
 
         pygame.display.flip()
@@ -684,16 +666,9 @@ class Game():
             self.draw()
             self.clock.tick(FPS)
 
-def main():
-    # Levels
-    levels = ["level-1.json"]
-
-    # Start game
+if __name__ == "__main__":
     game = Game(levels)
     game.start()
     game.loop()
     pygame.quit()
     sys.exit()
-
-if __name__ == "__main__":
-    main()
