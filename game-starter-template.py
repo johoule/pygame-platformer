@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import pygame
 
 pygame.init()
@@ -18,10 +20,10 @@ font_small = pygame.font.Font(None, 32)
 font_big = pygame.font.Font(None, 64)
 
 # Images
-hero_img = pygame.image.load("assets/player_walk1.png")
+hero_img = pygame.image.load("assets/character/adventurer_walk1.png")
 hero_img = pygame.transform.scale(hero_img, (64, 64))
 
-block_img = pygame.image.load("assets/platformIndustrial_003.png")
+block_img = pygame.image.load("assets/tiles/top_middle.png")
 block_img = pygame.transform.scale(block_img, (64, 64))
 
 # Controls
@@ -42,9 +44,9 @@ class Entity(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
-        
+
 class Block(Entity):
-    
+
     def __init__(self, x, y, image):
         super().__init__(x, y, image)
 
@@ -56,15 +58,15 @@ class Character(Entity):
 
         self.speed = 5
         self.jump_power = 20
-        
+
         self.vx = 0
         self.vy = 0
 
     def apply_gravity(self):
         pass
-    
+
     def process_blocks(self, blocks):
-        
+
         self.rect.x += self.vx
         hit_list = pygame.sprite.spritecollide(self, blocks, False)
 
@@ -89,16 +91,16 @@ class Character(Entity):
 
     def move_left(self):
         self.vx = -self.speed
-        
+
     def move_right(self):
         self.vx = self.speed
-        
+
     def stop(self):
         self.vx = 0
 
     def jump(self, blocks):
         pass
-        
+
     def update(self):
         self.rect.x += self.vx
         self.rect.y += self.vy
@@ -119,10 +121,7 @@ class Game():
 
         self.all_sprites = pygame.sprite.Group()
         self.all_sprites.add(hero, blocks)
-        
-    def reset(self):
-        pass
-                
+
     def play(self):
         # game loop
         done = False
@@ -135,9 +134,9 @@ class Game():
                 elif event.type == pygame.KEYDOWN:
                     if event.key == JUMP:
                         self.hero.jump(self.blocks)
-                        
+
             pressed = pygame.key.get_pressed()
-            
+
             # game logic
             if pressed[LEFT]:
                 self.hero.move_left()
@@ -147,10 +146,10 @@ class Game():
                 self.hero.stop()
 
             self.hero.update()
-            
+
             #Drawing
             window.fill(SKY_BLUE)
-            self.all_sprites.draw(window)     
+            self.all_sprites.draw(window)
 
             # Update window
             pygame.display.update()
@@ -164,7 +163,7 @@ def main():
     hero = Character(500, 512, hero_img)
 
     blocks = pygame.sprite.Group()
-     
+
     for i in range(0, WIDTH, 64):
         b = Block(i, 576, block_img)
         blocks.add(b)
@@ -178,9 +177,7 @@ def main():
 
     # Start game
     game = Game(hero, blocks)
-    game.reset()
     game.play()
 
 if __name__ == "__main__":
     main()
-    
