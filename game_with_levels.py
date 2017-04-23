@@ -60,16 +60,6 @@ bear_img1 = load_image("assets/enemies/bear-1.png")
 bear_img2 = pygame.transform.flip(bear_img1, 1, 0)
 bear_images = [bear_img1, bear_img2]
 
-background_img = pygame.image.load("assets/backgrounds/mountains.png")
-h = background_img.get_height()
-w = int(background_img.get_width() * HEIGHT / h)
-background_img = pygame.transform.scale(background_img, (w, HEIGHT))
-
-scenery_img = pygame.image.load("assets/backgrounds/forest.png")
-h = scenery_img.get_height()
-w = int(scenery_img.get_width() * HEIGHT / h)
-scenery_img = pygame.transform.scale(scenery_img, (w, HEIGHT))
-
 # Sounds
 pygame.mixer.music.load("assets/sounds/theme_of_the wanderer.ogg")
 
@@ -246,6 +236,8 @@ class Bear(Entity):
 
         self.images = images
 
+        self.start_x = x
+        self.start_y = y
         self.vx = -2
         self.vy = 0
 
@@ -303,12 +295,23 @@ class Bear(Entity):
             self.check_world_boundaries(level)
             self.update_image()
 
+    def reset(self):
+        self.rect.x = self.start_x
+        self.rect.y = self.start_y
+        self.vx = -2
+        self.vy = 0
+
 class Monster(Entity):
     def __init__(self, x, y, images):
         super().__init__(x, y, images[0])
 
         self.images = images
 
+        self.vx = -2
+        self.vy = 0
+
+        self.start_x = x
+        self.start_y = y
         self.vx = -2
         self.vy = 0
 
@@ -383,6 +386,12 @@ class Monster(Entity):
             self.check_world_boundaries(level)
             self.update_image()
 
+    def reset(self):
+        self.rect.x = self.start_x
+        self.rect.y = self.start_y
+        self.vx = -2
+        self.vy = 0
+
 class OneUp(Entity):
     def __init__(self, x, y, image):
         super().__init__(x, y, image)
@@ -404,48 +413,57 @@ class Flag(Entity):
 
 class Level():
 
-    def __init__(self):
+    def __init__(self, file_path):
+        self.starting_blocks = []
+        self.starting_enemies = []
+        self.starting_coins = []
+        self.starting_powerups = []
+        self.starting_flag = []
+
         self.blocks = pygame.sprite.Group()
-        self.coins = pygame.sprite.Group()
         self.enemies = pygame.sprite.Group()
+        self.coins = pygame.sprite.Group()
         self.powerups = pygame.sprite.Group()
         self.flag = pygame.sprite.Group()
 
-    def load(self, file_path):
+        self.active_sprites = pygame.sprite.Group()
+        self.inactive_sprites = pygame.sprite.Group()
+
         with open(file_path, 'r') as f:
             data = f.read()
 
         map_data = json.loads(data)
 
-        self.width, self.height = map_data['width'] * GRID_SIZE, map_data['height'] * GRID_SIZE
+        self.width = map_data['width'] * GRID_SIZE
+        self.height = map_data['height'] * GRID_SIZE
 
-        self.start_x, self.start_y = map_data['start'][0] * GRID_SIZE, map_data['start'][1] * GRID_SIZE
+        self.start_x = map_data['start'][0] * GRID_SIZE
+        self.start_y = map_data['start'][1] * GRID_SIZE
 
         for item in map_data['blocks']:
             x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
             img = block_images[item[2]]
-            self.blocks.add(Block(x, y, img))
-
-        for item in map_data['coins']:
-            x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
-            self.coins.add(Coin(x, y, coin_img))
+            self.starting_blocks.append(Block(x, y, img))
 
         for item in map_data['bears']:
             x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
-            self.enemies.add(Bear(x, y, bear_images))
+            self.starting_enemies.append(Bear(x, y, bear_images))
 
         for item in map_data['monsters']:
             x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
-            self.enemies.add(Monster(x, y, monster_images))
+            self.starting_enemies.append(Monster(x, y, monster_images))
+
+        for item in map_data['coins']:
+            x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
+            self.starting_coins.append(Coin(x, y, coin_img))
 
         for item in map_data['oneups']:
             x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
-            img = oneup_img
-            self.powerups.add(OneUp(x, y, img))
+            self.starting_powerups.append(OneUp(x, y, oneup_img))
 
         for item in map_data['hearts']:
             x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
-            self.powerups.add(Heart(x, y, heart_img))
+            self.starting_powerups.append(Heart(x, y, heart_img))
 
         for i, item in enumerate(map_data['flag']):
             x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
@@ -455,17 +473,59 @@ class Level():
             else:
                 img = flagpole_img
 
-            self.flag.add(Flag(x, y, img))
+            self.starting_flag.append(Flag(x, y, img))
 
-        self.background_img = None
-        self.scenery_img = None
+        self.background_layer = pygame.Surface([self.width, self.height], pygame.SRCALPHA, 32)
+        self.scenery_layer = pygame.Surface([self.width, self.height], pygame.SRCALPHA, 32)
+        self.inactive_layer = pygame.Surface([self.width, self.height], pygame.SRCALPHA, 32)
+        self.active_layer = pygame.Surface([self.width, self.height], pygame.SRCALPHA, 32)
+
+        background_img = pygame.image.load(map_data['background'])
+
+        if map_data['background-stretch-y']:
+            h = background_img.get_height()
+            w = int(background_img.get_width() * HEIGHT / h)
+            background_img = pygame.transform.scale(background_img, (w, HEIGHT))
+
+        if map_data['background-repeat-x']:
+            for y in range(0, self.width, background_img.get_width()):
+                self.background_layer.blit(background_img, [y, 0])
+
+        scenery_img = pygame.image.load(map_data['scenery'])
+
+        if map_data['scenery-stretch-y']:
+            h = scenery_img.get_height()
+            w = int(scenery_img.get_width() * HEIGHT / h)
+            scenery_img = pygame.transform.scale(scenery_img, (w, HEIGHT))
+
+        if map_data['scenery-repeat-x']:
+            for x in range(0, self.width, scenery_img.get_width()):
+                self.scenery_layer.blit(scenery_img, [x, 0])
 
         self.gravity = map_data['gravity']
 
         self.completed = False
 
+        self.blocks.add(self.starting_blocks)
+        self.enemies.add(self.starting_enemies)
+        self.coins.add(self.starting_coins)
+        self.powerups.add(self.starting_powerups)
+        self.flag.add(self.starting_flag)
+
+        self.active_sprites.add(self.coins, self.enemies, self.powerups)
+        self.inactive_sprites.add(self.blocks, self.flag)
+
+        self.inactive_sprites.draw(self.inactive_layer)
+
     def reset(self):
-        pass
+        self.enemies.add(self.starting_enemies)
+        self.coins.add(self.starting_coins)
+        self.powerups.add(self.starting_powerups)
+
+        self.active_sprites.add(self.coins, self.enemies, self.powerups)
+
+        for e in self.enemies:
+            e.reset()
 
 class Game():
 
@@ -481,44 +541,21 @@ class Game():
         self.clock = pygame.time.Clock()
 
         self.levels = levels
+        self.hero = Character(hero_img)
 
         self.stage = Game.START
         self.done = False
         self.current_level = 0
 
     def start(self):
-        self.level = Level()
-        self.level.load(self.levels[self.current_level])
-
-        self.hero = Character(hero_img)
-
-        self.hero.rect.x, self.hero.rect.y = self.level.start_x, self.level.start_y
-
-        self.active_sprites = pygame.sprite.Group()
-        self.inactive_sprites = pygame.sprite.Group()
-
-        self.active_sprites.add(self.level.coins, self.level.enemies, self.level.powerups)
-        self.inactive_sprites.add(self.level.blocks, self.level.flag)
-
-        self.background_layer = pygame.Surface([self.level.width, self.level.height], pygame.SRCALPHA, 32)
-        self.scenery_layer = pygame.Surface([self.level.width, self.level.height], pygame.SRCALPHA, 32)
-        self.inactive_layer = pygame.Surface([self.level.width, self.level.height], pygame.SRCALPHA, 32)
-        self.active_layer = pygame.Surface([self.level.width, self.level.height], pygame.SRCALPHA, 32)
-        self.foreground_layer = None
-        self.stats_layer = pygame.Surface([WIDTH, HEIGHT], pygame.SRCALPHA, 32)
-
-        for i in range(0, self.level.width, background_img.get_width()):
-            self.background_layer.blit(background_img, [i, 0])
-
-        for i in range(0, self.level.width, scenery_img.get_width()):
-            self.scenery_layer.blit(scenery_img, [i, 0])
-
-        self.inactive_sprites.draw(self.inactive_layer)
-
-    def reset_level(self):
-        pass
+        self.level = Level(self.levels[self.current_level])
+        self.level.reset()
+        self.hero.respawn(self.level)
 
     def advance_level(self):
+        pass
+
+    def reset(self):
         pass
 
     def display_splash(self, surface):
@@ -574,7 +611,6 @@ class Game():
             elif event.type == pygame.KEYDOWN:
                 if self.stage == Game.START:
                     self.stage = Game.PLAYING
-
                     pygame.mixer.music.play(-1)
 
                 elif self.stage == Game.PLAYING:
@@ -609,21 +645,25 @@ class Game():
             self.stage = Game.GAME_OVER
             pygame.mixer.music.stop()
         elif self.hero.hearts == 0:
+            self.level.reset()
             self.hero.respawn(self.level)
 
     def draw(self):
         offset_x, offset_y = self.calculate_offset()
 
-        self.active_layer.fill(TRANSPARENT)
-        self.active_sprites.draw(self.active_layer)
+        self.level.active_layer.fill(TRANSPARENT)
+        self.level.active_sprites.draw(self.level.active_layer)
 
-        if self.hero.invincibility % 3 < 2:
-            self.active_layer.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
+        #if self.hero.invincibility % 3 < 2:
+        #    self.level.active_layer.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
 
-        self.window.blit(self.background_layer, [offset_x / 3, offset_y])
-        self.window.blit(self.scenery_layer, [offset_x / 2, offset_y])
-        self.window.blit(self.inactive_layer, [offset_x, offset_y])
-        self.window.blit(self.active_layer, [offset_x, offset_y])
+        self.level.active_layer.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
+
+        self.window.blit(self.level.background_layer, [offset_x / 3, offset_y])
+        self.window.blit(self.level.scenery_layer, [offset_x / 2, offset_y])
+        self.window.blit(self.level.inactive_layer, [offset_x, offset_y])
+        self.window.blit(self.level.active_layer, [offset_x, offset_y])
+
         self.display_stats(self.window)
 
         if self.stage == Game.START:
