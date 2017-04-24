@@ -14,6 +14,14 @@ HEIGHT = 640
 FPS = 60
 GRID_SIZE = 64
 
+# Options
+sound_on = False
+
+# Controls
+LEFT = pygame.K_LEFT
+RIGHT = pygame.K_RIGHT
+JUMP = pygame.K_SPACE
+
 # Levels
 levels = ["level-1.json"]
 
@@ -27,11 +35,20 @@ FONT_SM = pygame.font.Font("assets/fonts/minya_nouvelle_bd.ttf", 32)
 FONT_MD = pygame.font.Font("assets/fonts/minya_nouvelle_bd.ttf", 64)
 FONT_LG = pygame.font.Font("assets/fonts/thats_super.ttf", 72)
 
+# Helper functions
 def load_image(file_path):
     img = pygame.image.load(file_path)
     img = pygame.transform.scale(img, (GRID_SIZE, GRID_SIZE))
 
     return img
+
+def play_sound(sound):
+    if sound_on:
+        sound.play()
+
+def play_music():
+    if sound_on:
+        pygame.mixer.music.play(-1)
 
 # Images
 hero_img = load_image("assets/character/adventurer_walk1.png")
@@ -60,8 +77,6 @@ bear_img = load_image("assets/enemies/bear-1.png")
 bear_images = [bear_img]
 
 # Sounds
-pygame.mixer.music.load("assets/sounds/theme_of_the wanderer.ogg")
-
 JUMP_SOUND = pygame.mixer.Sound("assets/sounds/jump.wav")
 COIN_SOUND = pygame.mixer.Sound("assets/sounds/pickup_coin.wav")
 POWERUP_SOUND = pygame.mixer.Sound("assets/sounds/powerup.wav")
@@ -118,7 +133,7 @@ class Character(Entity):
 
         if len(hit_list) > 0:
             self.vy = -1 * self.jump_power
-            JUMP_SOUND.play()
+            play_sound(JUMP_SOUND)
 
         self.rect.y -= 1
 
@@ -158,14 +173,14 @@ class Character(Entity):
         hit_list = pygame.sprite.spritecollide(self, coins, True)
 
         for coin in hit_list:
-            COIN_SOUND.play()
+            play_sound(COIN_SOUND)
             self.score += coin.value
 
     def process_enemies(self, enemies):
         hit_list = pygame.sprite.spritecollide(self, enemies, False)
 
         if len(hit_list) > 0 and self.invincibility == 0:
-            HURT_SOUND.play()
+            play_sound(HURT_SOUND)
             self.hearts -= 1
             self.invincibility = int(0.75 * FPS)
 
@@ -173,7 +188,7 @@ class Character(Entity):
         hit_list = pygame.sprite.spritecollide(self, powerups, True)
 
         for p in hit_list:
-            POWERUP_SOUND.play()
+            play_sound(POWERUP_SOUND)
             p.apply(self)
 
     def check_flag(self, level):
@@ -183,7 +198,7 @@ class Character(Entity):
 
         if got_it:
             level.completed = True
-            LEVELUP_SOUND.play()
+            play_sound(LEVELUP_SOUND)
 
         return got_it
 
@@ -193,7 +208,7 @@ class Character(Entity):
         if self.lives > 0:
             DIE_SOUND.play()
         else:
-            GAMEOVER_SOUND.play()
+            play_sound(GAMEOVER_SOUND)
 
     def respawn(self, level):
         self.rect.x = level.start_x
@@ -461,27 +476,48 @@ class Level():
         self.inactive_layer = pygame.Surface([self.width, self.height], pygame.SRCALPHA, 32)
         self.active_layer = pygame.Surface([self.width, self.height], pygame.SRCALPHA, 32)
 
-        background_img = pygame.image.load(map_data['background'])
+        if map_data['background-color'] != "":
+            self.background_layer.fill(map_data['background-color'])
 
-        if map_data['background-stretch-y']:
-            h = background_img.get_height()
-            w = int(background_img.get_width() * HEIGHT / h)
-            background_img = pygame.transform.scale(background_img, (w, HEIGHT))
+        if map_data['background-img'] != "":
+            background_img = pygame.image.load(map_data['background-img'])
 
-        if map_data['background-repeat-x']:
-            for y in range(0, self.width, background_img.get_width()):
-                self.background_layer.blit(background_img, [y, 0])
+            if map_data['background-fill-y']:
+                h = background_img.get_height()
+                w = int(background_img.get_width() * HEIGHT / h)
+                background_img = pygame.transform.scale(background_img, (w, HEIGHT))
 
-        scenery_img = pygame.image.load(map_data['scenery'])
+            if "top" in map_data['background-position']:
+                start_y = 0
+            elif "bottom" in map_data['background-position']:
+                start_y = self.height - background_img.get_height()
 
-        if map_data['scenery-stretch-y']:
-            h = scenery_img.get_height()
-            w = int(scenery_img.get_width() * HEIGHT / h)
-            scenery_img = pygame.transform.scale(scenery_img, (w, HEIGHT))
+            if map_data['background-repeat-x']:
+                for x in range(0, self.width, background_img.get_width()):
+                    self.background_layer.blit(background_img, [x, start_y])
+            else:
+                self.background_layer.blit(background_img, [0, start_y])
 
-        if map_data['scenery-repeat-x']:
-            for x in range(0, self.width, scenery_img.get_width()):
-                self.scenery_layer.blit(scenery_img, [x, 0])
+        if map_data['scenery-img'] != "":
+            scenery_img = pygame.image.load(map_data['scenery-img'])
+
+            if map_data['scenery-fill-y']:
+                h = scenery_img.get_height()
+                w = int(scenery_img.get_width() * HEIGHT / h)
+                scenery_img = pygame.transform.scale(scenery_img, (w, HEIGHT))
+
+            if "top" in map_data['scenery-position']:
+                start_y = 0
+            elif "bottom" in map_data['scenery-position']:
+                start_y = self.height - scenery_img.get_height()
+
+            if map_data['scenery-repeat-x']:
+                for x in range(0, self.width, scenery_img.get_width()):
+                    self.scenery_layer.blit(scenery_img, [x, start_y])
+            else:
+                self.scenery_layer.blit(scenery_img, [0, start_y])
+
+        pygame.mixer.music.load(map_data['music'])
 
         self.gravity = map_data['gravity']
 
@@ -583,11 +619,14 @@ class Game():
             elif event.type == pygame.KEYDOWN:
                 if self.stage == Game.START:
                     self.stage = Game.PLAYING
-                    pygame.mixer.music.play(-1)
+                    play_music()
 
                 elif self.stage == Game.PLAYING:
-                    if event.key == pygame.K_SPACE:
+                    if event.key == JUMP:
                         self.hero.jump(self.level.blocks)
+
+                elif self.stage == Game.PAUSED:
+                    pass
 
                 elif self.stage == Game.LEVEL_COMPLETED:
                     pass
@@ -598,9 +637,9 @@ class Game():
         pressed = pygame.key.get_pressed()
 
         if self.stage == Game.PLAYING:
-            if pressed[pygame.K_LEFT]:
+            if pressed[LEFT]:
                 self.hero.move_left()
-            elif pressed[pygame.K_RIGHT]:
+            elif pressed[RIGHT]:
                 self.hero.move_right()
             else:
                 self.hero.stop()
