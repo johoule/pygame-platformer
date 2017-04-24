@@ -28,7 +28,7 @@
 - Let the 'M' key toggle music on and off. Show a little note icon (crossed out or uncrossed) to indicate the current state of music.
 - Create your own custom artwork. http://www.piskelapp.com/ is a good site for this.
 - Give points for completing a level.
-- Create invincibility (star) power-up.
+- Create invincibility (star) power-up. (The optional arguments on the play_sound function can help you match an invincibility sound length to the invincibility period.)
 - Create a power-up which increases the max hearts a player can have.
 - Add prizes other than coins and give them a point value.
 - Track coins separately from the score. (They can still be worth points.) Give an extra live when a number of coins is earned. Reset the coin count after a life is given.

@@ -42,9 +42,12 @@ def load_image(file_path):
 
     return img
 
-def play_sound(sound):
+def play_sound(sound, loops=0, maxtime=0, fade_ms=0):
     if sound_on:
-        sound.play()
+        if maxtime == 0:
+            sound.play(loops, maxtime, fade_ms)
+        else:
+            sound.play(loops, maxtime, fade_ms)
 
 def play_music():
     if sound_on:
@@ -213,13 +216,9 @@ class Character(Entity):
     def check_flag(self, level):
         hit_list = pygame.sprite.spritecollide(self, level.flag, False)
 
-        got_it = len(hit_list) > 0
-
-        if got_it:
+        if len(hit_list) > 0:
             level.completed = True
             play_sound(LEVELUP_SOUND)
-
-        return got_it
 
     def set_image(self):
         if self.on_ground:
@@ -253,12 +252,13 @@ class Character(Entity):
         self.rect.x = level.start_x
         self.rect.y = level.start_y
         self.hearts = self.max_hearts
+        self.invincibility = 0
 
     def update(self, level):
+        self.process_enemies(level.enemies)
         self.apply_gravity(level)
         self.move_and_process_blocks(level.blocks)
         self.check_world_boundaries(level)
-        self.process_enemies(level.enemies)
         self.set_image()
 
         if self.hearts > 0:
@@ -716,10 +716,8 @@ class Game():
         self.level.active_layer.fill(TRANSPARENT)
         self.level.active_sprites.draw(self.level.active_layer)
 
-        #if self.hero.invincibility % 3 < 2:
-        #    self.level.active_layer.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
-
-        self.level.active_layer.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
+        if self.hero.invincibility % 3 < 2:
+            self.level.active_layer.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
 
         self.window.blit(self.level.background_layer, [offset_x / 3, offset_y])
         self.window.blit(self.level.scenery_layer, [offset_x / 2, offset_y])
