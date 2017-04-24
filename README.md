@@ -40,6 +40,7 @@
 - Make a credits screen for when the player wins the game.
 - Add a 'Pause' stage to the game which is activated when the player presses 'P' (or a button on the joystick). All movement and time should stop during a pause stage. Pressing 'P' again should resume. Be sure to show a message indicating the game is paused.
 - Give points for getting the flag at the end of the level. Do so in a way that landing higher on the flagpole earns more points.
+- Use a modifier key that makes you run faster while the key is held.
 
 
 ### Hard
