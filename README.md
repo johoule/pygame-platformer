@@ -19,26 +19,25 @@
 - Create a custom splash screen.
 - Change point value for coins.
 - Make power-ups give points to the player.
-- Make health display hearts/max.
+- Display hearts/max rather than just hearts.
 - Update the display_stats function so that it shows the name of the current level.
+- Add a victory sound that plays when the game is won.
 
 ### Medium
 
 - Let the 'S' key toggle sound on and off. Show a little speaker/mute icon to indicate the current state of sound.
 - Let the 'M' key toggle music on and off. Show a little note icon (crossed out or uncrossed) to indicate the current state of music.
 - Create your own custom artwork. http://www.piskelapp.com/ is a good site for this.
-- Give points for completing a level.
 - Create invincibility (star) power-up. (The optional arguments on the play_sound function can help you match an invincibility sound length to the invincibility period.)
-- Create a power-up which increases the max hearts a player can have.
+- Increases the max hearts a player can have when a milestone is achieved.
 - Add prizes other than coins and give them a point value.
-- Track coins separately from the score. (They can still be worth points.) Give an extra live when a number of coins is earned. Reset the coin count after a life is given.
-- Invent your own power-up.
+- Track coins separately from the score. (They can still be worth points.) Give an extra life when a number of coins is earned. Reset the coin count after a life is given.
+- Invent your own power-up which lasts a limited amount of time or until the player hits an enemy.
 - Invent a "power-up" which has a negative consequence on a player other than reducing hearts or lives.
 - Display lives with a character icon x number of lives.
 - Make a player die when they fall through the bottom of the world. You'll need to make sure enemies that fall through are also removed from the game. Pygame's sprite.kill() function will be useful for this.
 - Make a credits screen for when the player wins the game.
 - Add a 'Pause' stage to the game which is activated when the player presses 'P' (or a button on the joystick). All movement and time should stop during a pause stage. Pressing 'P' again should resume. Be sure to show a message indicating the game is paused.
-- Add a victory sound that plays when the game is won.
 
 ### Hard
 
@@ -47,17 +46,15 @@
 - Change the game so that it uses the XBox controller instead of the keyboard. (https://github.com/joncoop/pygame-xbox360controller)
 - Kill enemies when you land on them. You'll need to check which direction you hit the enemy from in process enemies. Award different point values for different enemy types.
 - Make the game save high scores to a text file in a data folder.
+- Create some other kind of custom enemy with unique behavior.
+- Display actual hearts to show health. Show empty hearts when health not full.
+- Show time on the stats layer. Give a time bonus for completing a level. Have the hero die if the level is not completed in a set amount of time.
 
 ### How clever are you?
 
 - Add a moving element such as clouds or flickering torches to the background or scenery layer.
-- Create Bullet enemy.
-- Create some other kind of custom enemy with unique behavior.
-- Display actual hearts to show health. Show empty hearts when health not full.
-- Show time on the stats layer. Give a time bonus for completing a level. Have the hero die if the level is not completed in a set amount of time.
 - Add secret parts of the level that utilize vertical scrolling.
 - Add ladders to the game. If a player is on a ladder, don't apply gravity. Assign vy by player input instead.
-- Put warp pipes or doors in the game.
 - Put switches in the game that open areas of a level.
 - Put mystery blocks in the game.
 
@@ -65,9 +62,9 @@
 
 - Create a text/image advertisement for your game.
 - Create a video advertisement for your game.
-- Write a review of a classmate's game.
-- Create a website for your game.
-
+- Create a website for your game using GitHub Pages.
+- Write a review of a classmate's game. Include screenshots.
+- Create a video review of a classmate's game.
 
 ## Grading
 

@@ -23,7 +23,9 @@ RIGHT = pygame.K_RIGHT
 JUMP = pygame.K_SPACE
 
 # Levels
-levels = ["level-1.json", "level-1.json", "level-1.json"]
+levels = ["levels/world-1.json",
+          "levels/world-2.json",
+          "levels/world-3.json"]
 
 # Colors
 TRANSPARENT = (0, 0, 0, 0)
@@ -102,6 +104,13 @@ class Entity(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+        self.vy = 0
+        self.vx = 0
+
+    def apply_gravity(self, level):
+        self.vy += level.gravity
+        self.vy = min(self.vy, level.terminal_velocity)
+
 class Block(Entity):
 
     def __init__(self, x, y, image):
@@ -156,9 +165,6 @@ class Character(Entity):
             play_sound(JUMP_SOUND)
 
         self.rect.y -= 1
-
-    def apply_gravity(self, level):
-        self.vy += level.gravity
 
     def check_world_boundaries(self, level):
         if self.rect.left < 0:
@@ -297,9 +303,6 @@ class Enemy(Entity):
             self.current_images = self.images_right
 
         self.image = self.current_images[self.image_index]
-
-    def apply_gravity(self, level):
-        self.vy += level.gravity
 
     def check_world_boundaries(self, level):
         if self.rect.left < 0:
@@ -553,6 +556,7 @@ class Level():
         pygame.mixer.music.load(map_data['music'])
 
         self.gravity = map_data['gravity']
+        self.terminal_velocity = map_data['terminal-velocity']
 
         self.completed = False
 

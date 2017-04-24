@@ -1,5 +1,5 @@
 {
-	"name": "World 1-1",
+	"name": "World 1",
 	"width": 32,
 	"height": 10,
 	"background-color": [130, 182, 255],
@@ -14,6 +14,7 @@
 	"music": "assets/sounds/theme_of_the wanderer.ogg",
 	"start": [4, 8],
 	"gravity": 1.0,
+	"terminal-velocity": 32,
 	"blocks": [[0, 9, "TM"], [1, 9, "TM"], [2, 9, "TM"], [3, 9, "TM"], [4, 9, "TM"],
 	           [5, 9, "TM"], [6, 9, "TM"], [7, 9, "TM"], [8, 9, "TM"], [9, 9, "TM"],
 						 [10, 9, "TM"], [11, 9, "TM"], [12, 9, "TM"], [13, 9, "TM"], [14, 9, "TM"],
