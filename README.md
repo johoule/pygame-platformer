@@ -7,8 +7,8 @@
 
 ### Easy
 
-- Change the dimensions of the game window.
 - Name your game.
+- Change the dimensions of the game window.
 - Find your own custom artwork for blocks.
 - Find your own custom artwork for the hero.
 - Find your own custom artwork for enemies.
@@ -29,34 +29,34 @@
 - Let the 'M' key toggle music on and off. Show a little note icon (crossed out or uncrossed) to indicate the current state of music.
 - Create your own custom artwork. http://www.piskelapp.com/ is a good site for this.
 - Create invincibility (star) power-up. (The optional arguments on the play_sound function can help you match an invincibility sound length to the invincibility period.)
-- Increases the max hearts a player can have when a milestone is achieved.
+- Increase the max hearts a player can have when some milestone is achieved.
 - Add prizes other than coins and give them a point value.
 - Track coins separately from the score. (They can still be worth points.) Give an extra life when a number of coins is earned. Reset the coin count after a life is given.
 - Invent your own power-up which lasts a limited amount of time or until the player hits an enemy.
 - Invent a "power-up" which has a negative consequence on a player other than reducing hearts or lives.
 - Display lives with a character icon x number of lives.
-- Make a player die when they fall through the bottom of the world. You'll need to make sure enemies that fall through are also removed from the game. Pygame's sprite.kill() function will be useful for this.
+- Put gaps in your level. Then make a player die when they fall through the bottom of the world. You'll need to make sure enemies that fall through are also removed from the game. Pygame's sprite.kill() function will be useful for this.
 - Make a credits screen for when the player wins the game.
 - Add a 'Pause' stage to the game which is activated when the player presses 'P' (or a button on the joystick). All movement and time should stop during a pause stage. Pressing 'P' again should resume. Be sure to show a message indicating the game is paused.
+- Give points for getting the flag at the end of the level. Do so in a way that landing higher on the flagpole earns more points.
 
 ### Hard
 
-- Design a standard level.
+- Design a complex standard level.
 - Incorporate different kinds of levels (normal, space level, underwater, etc.) into the game.
 - Change the game so that it uses the XBox controller instead of the keyboard. (https://github.com/joncoop/pygame-xbox360controller)
 - Kill enemies when you land on them. You'll need to check which direction you hit the enemy from in process enemies. Award different point values for different enemy types.
 - Make the game save high scores to a text file in a data folder.
 - Create some other kind of custom enemy with unique behavior.
-- Display actual hearts to show health. Show empty hearts when health not full.
+- Display actual hearts to show health. Show empty hearts when health is not full.
 - Show time on the stats layer. Give a time bonus for completing a level. Have the hero die if the level is not completed in a set amount of time.
+- Animate a background element such as clouds or flickering torches. (This is probably best accomplished by creating another layer that scrolls along with the background or scenery layer rather than trying to blit directly on one of those layers.)
+- Add secret parts of the level that utilize vertical scrolling.
 
 ### How clever are you?
-
-- Add a moving element such as clouds or flickering torches to the background or scenery layer.
-- Add secret parts of the level that utilize vertical scrolling.
 - Add ladders to the game. If a player is on a ladder, don't apply gravity. Assign vy by player input instead.
-- Put switches in the game that open areas of a level.
-- Put mystery blocks in the game.
+- Put switches in the game that open and close areas of a level.
+- Create a Chest object with a boolean attribute locked set to True. Then create a Key object. If the player intersects a locked chest with a key, then locked should be set to False and the image should be updated. Spawn a prize that the player can acquire in the grid location directly above the chest when it is unlocked. Be sure to take away the players key when the character respawns after dying or at the start of a new level.
 
 ### More!
 

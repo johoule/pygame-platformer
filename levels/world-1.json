@@ -4,7 +4,7 @@
 	"height": 10,
 	"background-color": [130, 182, 255],
 	"background-img": "assets/backgrounds/mountains.png",
-	"background-position": "bottom",
+	"background-position": "top",
 	"background-repeat-x": 1,
 	"background-fill-y": 1,
 	"scenery-img": "assets/backgrounds/forest.png",

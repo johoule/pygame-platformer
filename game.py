@@ -59,8 +59,10 @@ def play_music():
 hero_walk1 = load_image("assets/character/adventurer_walk1.png")
 hero_walk2 = load_image("assets/character/adventurer_walk2.png")
 hero_jump = load_image("assets/character/adventurer_jump.png")
+hero_idle = load_image("assets/character/adventurer_idle.png")
 hero_images = {"run": [hero_walk1, hero_walk2],
-               "jump": hero_jump}
+               "jump": hero_jump,
+               "idle": hero_idle}
 
 block_images = {"TL": load_image("assets/tiles/top_left.png"),
                 "TM": load_image("assets/tiles/top_middle.png"),
@@ -119,14 +121,15 @@ class Block(Entity):
 class Character(Entity):
 
     def __init__(self, images):
-        super().__init__(0, 0, images['run'][0])
+        super().__init__(0, 0, images['idle'])
 
-        self.images_right = images['run']
-        self.images_left = [pygame.transform.flip(img, 1, 0) for img in self.images_right]
+        self.image_idle = images['idle']
+        self.images_run_right = images['run']
+        self.images_run_left = [pygame.transform.flip(img, 1, 0) for img in self.images_run_right]
         self.image_jump_right = images['jump']
         self.image_jump_left = pygame.transform.flip(self.image_jump_right, 1, 0)
 
-        self.current_images = self.images_right
+        self.running_images = self.images_run_right
         self.image_index = 0
         self.steps = 0
 
@@ -228,18 +231,19 @@ class Character(Entity):
 
     def set_image(self):
         if self.on_ground:
-            if self.facing_right:
-                self.current_images = self.images_right
-            else:
-                self.current_images = self.images_left
-
             if self.vx != 0:
-                self.steps = (self.steps + 1) % 5
+                if self.facing_right:
+                    self.running_images = self.images_run_right
+                else:
+                    self.running_images = self.images_run_left
+
+                self.steps = (self.steps + 1) % self.speed # Works well with 2 images, try lower number if more frames are in animation
 
                 if self.steps == 0:
-                    self.image_index = (self.image_index + 1) % len(self.current_images)
-
-            self.image = self.current_images[self.image_index]
+                    self.image_index = (self.image_index + 1) % len(self.running_images)
+                    self.image = self.running_images[self.image_index]
+            else:
+                self.image = self.image_idle
         else:
             if self.facing_right:
                 self.image = self.image_jump_right
@@ -274,7 +278,6 @@ class Character(Entity):
 
             if self.invincibility > 0:
                 self.invincibility -= 1
-
         else:
             self.die()
 
@@ -604,7 +607,7 @@ class Game():
         self.level.reset()
         self.hero.respawn(self.level)
 
-    def advance_level(self):
+    def advance(self):
         self.current_level += 1
         self.start()
         self.stage = Game.START
@@ -668,7 +671,7 @@ class Game():
                     pass
 
                 elif self.stage == Game.LEVEL_COMPLETED:
-                    self.advance_level()
+                    self.advance()
 
                 elif self.stage == Game.VICTORY or self.stage == Game.GAME_OVER:
                     if event.key == pygame.K_r:
@@ -733,7 +736,7 @@ class Game():
         if self.stage == Game.SPLASH:
             self.display_splash(self.window)
         elif self.stage == Game.START:
-            self.display_message(self.window, "Ready?!!!!", "Press any key to start.")
+            self.display_message(self.window, "Ready?!!!", "Press any key to start.")
         elif self.stage == Game.PAUSED:
             pass
         elif self.stage == Game.LEVEL_COMPLETED:
