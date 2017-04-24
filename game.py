@@ -1,8 +1,10 @@
-import pygame
-import random
-import copy
+#!/usr/bin/env python3
 
-pygame.mixer.pre_init(22050, -16, 2, 4096)
+import json
+import pygame
+import sys
+
+pygame.mixer.pre_init()
 pygame.init()
 
 # Window settings
@@ -10,11 +12,24 @@ TITLE = "Name of Game"
 WIDTH = 960
 HEIGHT = 640
 FPS = 60
+GRID_SIZE = 64
+
+# Options
+sound_on = True
+
+# Controls
+LEFT = pygame.K_LEFT
+RIGHT = pygame.K_RIGHT
+JUMP = pygame.K_SPACE
+
+# Levels
+levels = ["levels/world-1.json",
+          "levels/world-2.json",
+          "levels/world-3.json"]
 
 # Colors
 TRANSPARENT = (0, 0, 0, 0)
-DARK_CHALKY_BLUE = (16, 86, 103)
-SKY_BLUE = (87, 0, 235)
+DARK_BLUE = (16, 86, 103)
 WHITE = (255, 255, 255)
 
 # Fonts
@@ -22,59 +37,55 @@ FONT_SM = pygame.font.Font("assets/fonts/minya_nouvelle_bd.ttf", 32)
 FONT_MD = pygame.font.Font("assets/fonts/minya_nouvelle_bd.ttf", 64)
 FONT_LG = pygame.font.Font("assets/fonts/thats_super.ttf", 72)
 
+# Helper functions
+def load_image(file_path):
+    img = pygame.image.load(file_path)
+    img = pygame.transform.scale(img, (GRID_SIZE, GRID_SIZE))
+
+    return img
+
+def play_sound(sound, loops=0, maxtime=0, fade_ms=0):
+    if sound_on:
+        if maxtime == 0:
+            sound.play(loops, maxtime, fade_ms)
+        else:
+            sound.play(loops, maxtime, fade_ms)
+
+def play_music():
+    if sound_on:
+        pygame.mixer.music.play(-1)
+
 # Images
-hero_img = pygame.image.load("assets/character/adventurer_walk1.png")
-hero_img = pygame.transform.scale(hero_img, (64, 64))
+hero_walk1 = load_image("assets/character/adventurer_walk1.png")
+hero_walk2 = load_image("assets/character/adventurer_walk2.png")
+hero_jump = load_image("assets/character/adventurer_jump.png")
+hero_images = {"run": [hero_walk1, hero_walk2],
+               "jump": hero_jump}
 
-TL = pygame.image.load("assets/tiles/top_left.png")
-TM = pygame.image.load("assets/tiles/top_middle.png")
-TR = pygame.image.load("assets/tiles/top_right.png")
-ER = pygame.image.load("assets/tiles/end_right.png")
-EL = pygame.image.load("assets/tiles/end_left.png")
-TP = pygame.image.load("assets/tiles/top.png")
-CN = pygame.image.load("assets/tiles/center.png")
-LF = pygame.image.load("assets/tiles/lone_float.png")
-SP = pygame.image.load("assets/tiles/special.png")
+block_images = {"TL": load_image("assets/tiles/top_left.png"),
+                "TM": load_image("assets/tiles/top_middle.png"),
+                "TR": load_image("assets/tiles/top_right.png"),
+                "ER": load_image("assets/tiles/end_right.png"),
+                "EL": load_image("assets/tiles/end_left.png"),
+                "TP": load_image("assets/tiles/top.png"),
+                "CN": load_image("assets/tiles/center.png"),
+                "LF": load_image("assets/tiles/lone_float.png"),
+                "SP": load_image("assets/tiles/special.png")}
 
-coin_img = pygame.image.load("assets/items/coin.png")
-coin_img = pygame.transform.scale(coin_img, (64, 64))
+coin_img = load_image("assets/items/coin.png")
+heart_img = load_image("assets/items/bandaid.png")
+oneup_img = load_image("assets/items/first_aid.png")
+flag_img = load_image("assets/items/flag.png")
+flagpole_img = load_image("assets/items/flagpole.png")
 
-heart_img = pygame.image.load("assets/items/bandaid.png")
-heart_img = pygame.transform.scale(heart_img, (64, 64))
-
-oneup_img = pygame.image.load("assets/items/first_aid.png")
-oneup_img = pygame.transform.scale(oneup_img, (64, 64))
-
-flag_img = pygame.image.load("assets/items/flag.png")
-flag_img = pygame.transform.scale(flag_img, (64, 64))
-
-flagpole_img = pygame.image.load("assets/items/flagpole.png")
-flagpole_img = pygame.transform.scale(flagpole_img, (64, 64))
-
-monster_img1 = pygame.image.load("assets/enemies/monster-1.png")
-monster_img2 = pygame.image.load("assets/enemies/monster-2.png")
-monster_img1 = pygame.transform.scale(monster_img1, (64, 64))
-monster_img2 = pygame.transform.scale(monster_img2, (64, 64))
+monster_img1 = load_image("assets/enemies/monster-1.png")
+monster_img2 = load_image("assets/enemies/monster-2.png")
 monster_images = [monster_img1, monster_img2]
 
-bear_img1 = pygame.image.load("assets/enemies/bear-1.png")
-bear_img1 = pygame.transform.scale(bear_img1, (64, 64))
-bear_img2 = pygame.transform.flip(bear_img1, 1, 0)
-bear_images = [bear_img1, bear_img2]
-
-background_img = pygame.image.load("assets/backgrounds/mountains.png")
-h = background_img.get_height()
-w = int(background_img.get_width() * HEIGHT / h)
-background_img = pygame.transform.scale(background_img, (w, HEIGHT))
-
-scenery_img = pygame.image.load("assets/backgrounds/forest.png")
-h = scenery_img.get_height()
-w = int(scenery_img.get_width() * HEIGHT / h)
-scenery_img = pygame.transform.scale(scenery_img, (w, HEIGHT))
+bear_img = load_image("assets/enemies/bear-1.png")
+bear_images = [bear_img]
 
 # Sounds
-pygame.mixer.music.load("assets/sounds/theme_of_the wanderer.ogg")
-
 JUMP_SOUND = pygame.mixer.Sound("assets/sounds/jump.wav")
 COIN_SOUND = pygame.mixer.Sound("assets/sounds/pickup_coin.wav")
 POWERUP_SOUND = pygame.mixer.Sound("assets/sounds/powerup.wav")
@@ -83,42 +94,49 @@ DIE_SOUND = pygame.mixer.Sound("assets/sounds/death.wav")
 LEVELUP_SOUND = pygame.mixer.Sound("assets/sounds/level_up.wav")
 GAMEOVER_SOUND = pygame.mixer.Sound("assets/sounds/game_over.wav")
 
-# Controls
-LEFT = pygame.K_LEFT
-RIGHT = pygame.K_RIGHT
-JUMP = pygame.K_SPACE
-
-
 class Entity(pygame.sprite.Sprite):
 
     def __init__(self, x, y, image):
         super().__init__()
 
-        size = [image.get_width(), image.get_height()]
-        
-        self.image = pygame.Surface(size, pygame.SRCALPHA, 32)
-        self.image.blit(image, [0, 0])
-
+        self.image = image
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
 
+        self.vy = 0
+        self.vx = 0
+
+    def apply_gravity(self, level):
+        self.vy += level.gravity
+        self.vy = min(self.vy, level.terminal_velocity)
+
 class Block(Entity):
-    
+
     def __init__(self, x, y, image):
         super().__init__(x, y, image)
-
 
 class Character(Entity):
 
-    def __init__(self, x, y, image):
-        super().__init__(x, y, image)
+    def __init__(self, images):
+        super().__init__(0, 0, images['run'][0])
+
+        self.images_right = images['run']
+        self.images_left = [pygame.transform.flip(img, 1, 0) for img in self.images_right]
+        self.image_jump_right = images['jump']
+        self.image_jump_left = pygame.transform.flip(self.image_jump_right, 1, 0)
+
+        self.current_images = self.images_right
+        self.image_index = 0
+        self.steps = 0
 
         self.speed = 5
         self.jump_power = 20
-        
+
         self.vx = 0
         self.vy = 0
+        self.facing_right = True
+        self.on_ground = True
 
         self.score = 0
         self.lives = 3
@@ -126,95 +144,14 @@ class Character(Entity):
         self.max_hearts = 3
         self.invincibility = 0
 
-    def apply_gravity(self, level):
-        self.vy += level.gravity
-
-    def check_world_boundaries(self, level):
-        if self.rect.left < 0:
-            self.rect.left = 0
-        elif self.rect.right > level.width:
-            self.rect.right = level.width
-    
-    def move_and_process_blocks(self, blocks):
-        self.rect.x += self.vx
-        hit_list = pygame.sprite.spritecollide(self, blocks, False)
-
-        for block in hit_list:
-            if self.vx > 0:
-                self.rect.right = block.rect.left
-                self.vx = 0
-            elif self.vx < 0:
-                self.rect.left = block.rect.right
-                self.vx = 0
-
-        self.rect.y += self.vy
-        hit_list = pygame.sprite.spritecollide(self, blocks, False)
-
-        for block in hit_list:
-            if self.vy > 0:
-                self.rect.bottom = block.rect.top
-                self.vy = 0
-            elif self.vy < 0:
-                self.rect.top = block.rect.bottom
-                self.vy = 0
-
-    def process_coins(self, coins):
-        hit_list = pygame.sprite.spritecollide(self, coins, True)
-
-        for coin in hit_list:
-            COIN_SOUND.play()
-            self.score += coin.value
-            
-    def process_enemies(self, enemies):
-        hit_list = pygame.sprite.spritecollide(self, enemies, False)
-
-        if len(hit_list) > 0 and self.invincibility == 0:
-            HURT_SOUND.play()
-            self.hearts -= 1
-            self.invincibility = int(0.5 * FPS)
-
-    def process_powerups(self, powerups):
-        hit_list = pygame.sprite.spritecollide(self, powerups, True)
-
-        for p in hit_list:
-            POWERUP_SOUND.play()
-            p.apply(self)
-
-    def check_flag(self, flag):
-        hit_list = pygame.sprite.spritecollide(self, flag, False)
-
-        got_it = len(hit_list) > 0
-
-        if got_it:
-            LEVELUP_SOUND.play()
-            
-        return got_it
-
-    def die(self):
-        self.lives -= 1
-
-        if self.lives > 0:
-            DIE_SOUND.play()
-        else:
-            GAMEOVER_SOUND.play()
-            
-    def respawn(self, level):
-        self.rect.x = level.start_x
-        self.rect.y = level.start_y
-        self.hearts = self.max_hearts
-                
-    def update_status(self):
-        if self.hearts == 0:
-            self.die()
-        if self.invincibility > 0:            
-            self.invincibility -= 1
-
     def move_left(self):
         self.vx = -self.speed
-        
+        self.facing_right = False
+
     def move_right(self):
         self.vx = self.speed
-        
+        self.facing_right = True
+
     def stop(self):
         self.vx = 0
 
@@ -225,49 +162,15 @@ class Character(Entity):
 
         if len(hit_list) > 0:
             self.vy = -1 * self.jump_power
-            
+            play_sound(JUMP_SOUND)
+
         self.rect.y -= 1
- 
-    def update(self, level):
-        self.apply_gravity(level)
-        self.move_and_process_blocks(level.blocks)
-        self.check_world_boundaries(level)        
 
-        self.process_enemies(level.enemies)
-        self.process_coins(level.coins)
-        self.process_powerups(level.powerups)
-
-        self.update_status()
-        
-        level.completed = self.check_flag(level.flag)
-
-
-class Coin(Entity):
-    def __init__(self, x, y, image):
-        super().__init__(x, y, image)
-
-        self.value = 1
-
-        
-class Bear(Entity):
-    def __init__(self, x, y, images):
-        super().__init__(x, y, images[0])
-
-        self.images = images
-        
-        self.vx = -2
-        self.vy = 0
-
-    def apply_gravity(self, level):
-        self.vy += level.gravity
-    
     def check_world_boundaries(self, level):
         if self.rect.left < 0:
             self.rect.left = 0
-            self.vx *= -1
         elif self.rect.right > level.width:
             self.rect.right = level.width
-            self.vx *= -1
 
     def move_and_process_blocks(self, blocks):
         self.rect.x += self.vx
@@ -276,10 +179,190 @@ class Bear(Entity):
         for block in hit_list:
             if self.vx > 0:
                 self.rect.right = block.rect.left
-                self.vx *= -1
+                self.vx = 0
             elif self.vx < 0:
                 self.rect.left = block.rect.right
-                self.vx *= -1
+                self.vx = 0
+
+        self.on_ground = False
+        self.rect.y += self.vy
+        hit_list = pygame.sprite.spritecollide(self, blocks, False)
+
+        for block in hit_list:
+            if self.vy > 0:
+                self.rect.bottom = block.rect.top
+                self.vy = 0
+                self.on_ground = True
+            elif self.vy < 0:
+                self.rect.top = block.rect.bottom
+                self.vy = 0
+
+    def process_coins(self, coins):
+        hit_list = pygame.sprite.spritecollide(self, coins, True)
+
+        for coin in hit_list:
+            play_sound(COIN_SOUND)
+            self.score += coin.value
+
+    def process_enemies(self, enemies):
+        hit_list = pygame.sprite.spritecollide(self, enemies, False)
+
+        if len(hit_list) > 0 and self.invincibility == 0:
+            play_sound(HURT_SOUND)
+            self.hearts -= 1
+            self.invincibility = int(0.75 * FPS)
+
+    def process_powerups(self, powerups):
+        hit_list = pygame.sprite.spritecollide(self, powerups, True)
+
+        for p in hit_list:
+            play_sound(POWERUP_SOUND)
+            p.apply(self)
+
+    def check_flag(self, level):
+        hit_list = pygame.sprite.spritecollide(self, level.flag, False)
+
+        if len(hit_list) > 0:
+            level.completed = True
+            play_sound(LEVELUP_SOUND)
+
+    def set_image(self):
+        if self.on_ground:
+            if self.facing_right:
+                self.current_images = self.images_right
+            else:
+                self.current_images = self.images_left
+
+            if self.vx != 0:
+                self.steps = (self.steps + 1) % 5
+
+                if self.steps == 0:
+                    self.image_index = (self.image_index + 1) % len(self.current_images)
+
+            self.image = self.current_images[self.image_index]
+        else:
+            if self.facing_right:
+                self.image = self.image_jump_right
+            else:
+                self.image = self.image_jump_left
+
+    def die(self):
+        self.lives -= 1
+
+        if self.lives > 0:
+            play_sound(DIE_SOUND)
+        else:
+            play_sound(GAMEOVER_SOUND)
+
+    def respawn(self, level):
+        self.rect.x = level.start_x
+        self.rect.y = level.start_y
+        self.hearts = self.max_hearts
+        self.invincibility = 0
+
+    def update(self, level):
+        self.process_enemies(level.enemies)
+        self.apply_gravity(level)
+        self.move_and_process_blocks(level.blocks)
+        self.check_world_boundaries(level)
+        self.set_image()
+
+        if self.hearts > 0:
+            self.process_coins(level.coins)
+            self.process_powerups(level.powerups)
+            self.check_flag(level)
+
+            if self.invincibility > 0:
+                self.invincibility -= 1
+
+        else:
+            self.die()
+
+class Coin(Entity):
+    def __init__(self, x, y, image):
+        super().__init__(x, y, image)
+
+        self.value = 1
+
+class Enemy(Entity):
+    def __init__(self, x, y, images):
+        super().__init__(x, y, images[0])
+
+        self.images_left = images
+        self.images_right = [pygame.transform.flip(img, 1, 0) for img in images]
+        self.current_images = self.images_left
+        self.image_index = 0
+        self.steps = 0
+
+    def reverse(self):
+        self.vx *= -1
+
+        if self.vx < 0:
+            self.current_images = self.images_left
+        else:
+            self.current_images = self.images_right
+
+        self.image = self.current_images[self.image_index]
+
+    def check_world_boundaries(self, level):
+        if self.rect.left < 0:
+            self.rect.left = 0
+            self.reverse()
+        elif self.rect.right > level.width:
+            self.rect.right = level.width
+            self.reverse()
+
+    def move_and_process_blocks(self):
+        pass
+
+    def set_images(self):
+        if self.steps == 0:
+            self.image = self.current_images[self.image_index]
+            self.image_index = (self.image_index + 1) % len(self.current_images)
+
+        self.steps = (self.steps + 1) % 20 # Nothing significant about 20. It just seems to work okay.
+
+    def is_near(self, hero):
+        return abs(self.rect.x - hero.rect.x) < 2 * WIDTH
+
+    def update(self, level, hero):
+        if self.is_near(hero):
+            self.apply_gravity(level)
+            self.move_and_process_blocks(level.blocks)
+            self.check_world_boundaries(level)
+            self.set_images()
+
+    def reset(self):
+        self.rect.x = self.start_x
+        self.rect.y = self.start_y
+        self.vx = self.start_vx
+        self.vy = self.start_vy
+        self.image = self.images_left[0]
+        self.steps = 0
+
+class Bear(Enemy):
+    def __init__(self, x, y, images):
+        super().__init__(x, y, images)
+
+        self.start_x = x
+        self.start_y = y
+        self.start_vx = -2
+        self.start_vy = 0
+
+        self.vx = self.start_vx
+        self.vy = self.start_vy
+
+    def move_and_process_blocks(self, blocks):
+        self.rect.x += self.vx
+        hit_list = pygame.sprite.spritecollide(self, blocks, False)
+
+        for block in hit_list:
+            if self.vx > 0:
+                self.rect.right = block.rect.left
+                self.reverse()
+            elif self.vx < 0:
+                self.rect.left = block.rect.right
+                self.reverse()
 
         self.rect.y += self.vy
         hit_list = pygame.sprite.spritecollide(self, blocks, False)
@@ -292,94 +375,54 @@ class Bear(Entity):
                 self.rect.top = block.rect.bottom
                 self.vy = 0
 
-    def update_image(self):
-        self.image.fill(TRANSPARENT)
-        
-        if self.vx < 0:
-            self.image.blit(self.images[0], [0, 0])
-        else:
-            self.image.blit(self.images[1], [0, 0])
-        
-    def update(self, level, hero):
-        distance = abs(self.rect.x - hero.rect.x)
-
-        if distance < 2 * WIDTH:
-            self.apply_gravity(level)
-            self.move_and_process_blocks(level.blocks)
-            self.check_world_boundaries(level)
-            self.update_image()
-            
-class Monster(Entity):
+class Monster(Enemy):
     def __init__(self, x, y, images):
-        super().__init__(x, y, images[0])
+        super().__init__(x, y, images)
 
-        self.images = images
-        
-        self.vx = -2
-        self.vy = 0
+        self.start_x = x
+        self.start_y = y
+        self.start_vx = -2
+        self.start_vy = 0
 
-        self.ticks = 0
-        self.current = 0
-        
-    def apply_gravity(self, level):
-        self.vy += level.gravity
-    
-    def check_world_boundaries(self, level):
-        if self.rect.left < 0:
-            self.rect.left = 0
-            self.vx *= -1
-        elif self.rect.right > level.width:
-            self.rect.right = level.width
-            self.vx *= -1
+        self.vx = self.start_vx
+        self.vy = self.start_vy
 
     def move_and_process_blocks(self, blocks):
         reverse = False
-        
+
         self.rect.x += self.vx
         hit_list = pygame.sprite.spritecollide(self, blocks, False)
 
         for block in hit_list:
             if self.vx > 0:
                 self.rect.right = block.rect.left
-                self.vx *= -1
+                self.reverse()
             elif self.vx < 0:
                 self.rect.left = block.rect.right
-                self.vx *= -1
+                self.reverse()
 
         self.rect.y += self.vy
         hit_list = pygame.sprite.spritecollide(self, blocks, False)
 
         reverse = True
-        
+
         for block in hit_list:
-            self.rect.bottom = block.rect.top
-            self.vy = 0
-            
-            if self.vx > 0 and self.rect.right <= block.rect.right:
-                reverse = False
-                    
-            elif self.vx < 0 and self.rect.left >= block.rect.left:
-                reverse = False         
+            if self.vy >= 0:
+                self.rect.bottom = block.rect.top
+                self.vy = 0
+
+                if self.vx > 0 and self.rect.right <= block.rect.right:
+                    reverse = False
+
+                elif self.vx < 0 and self.rect.left >= block.rect.left:
+                    reverse = False
+
+            elif self.vy < 0:
+                self.rect.top = block.rect.bottom
+                self.vy = 0
 
         if reverse:
-            self.vx *= -1
-    
-    def update_image(self):
-        if self.ticks == 0:
-            self.image.fill(TRANSPARENT)
-            self.image.blit(self.images[self.current], [0, 0])
-            self.current = (self.current + 1) % len(self.images)
-            
-        self.ticks = (self.ticks + 1) % (FPS / 3)
-
-    def update(self, level, hero):
-        distance = abs(self.rect.x - hero.rect.x)
-
-        if distance < 2 * WIDTH:
-            self.apply_gravity(level)
-            self.move_and_process_blocks(level.blocks)
-            self.check_world_boundaries(level)
-            self.update_image()
+            self.reverse()
 
 class OneUp(Entity):
     def __init__(self, x, y, image):
@@ -387,7 +430,6 @@ class OneUp(Entity):
 
     def apply(self, character):
         character.lives += 1
-
 
 class Heart(Entity):
     def __init__(self, x, y, image):
@@ -397,109 +439,270 @@ class Heart(Entity):
         character.hearts += 1
         character.hearts = max(character.hearts, character.max_hearts)
 
-        
 class Flag(Entity):
     def __init__(self, x, y, image):
         super().__init__(x, y, image)
 
-
 class Level():
-    
-    def __init__(self, blocks, coins, enemies, powerups, flag):
-        self.blocks = blocks
-        self.coins = coins
-        self.enemies = enemies
-        self.powerups = powerups
-        self.flag = flag
 
-        self.starting_coins = copy.deepcopy(coins)
-        self.starting_enemies = copy.deepcopy(enemies)
-        self.starting_powerups = copy.deepcopy(powerups)
+    def __init__(self, file_path):
+        self.starting_blocks = []
+        self.starting_enemies = []
+        self.starting_coins = []
+        self.starting_powerups = []
+        self.starting_flag = []
+
+        self.blocks = pygame.sprite.Group()
+        self.enemies = pygame.sprite.Group()
+        self.coins = pygame.sprite.Group()
+        self.powerups = pygame.sprite.Group()
+        self.flag = pygame.sprite.Group()
 
         self.active_sprites = pygame.sprite.Group()
+        self.inactive_sprites = pygame.sprite.Group()
+
+        with open(file_path, 'r') as f:
+            data = f.read()
+
+        map_data = json.loads(data)
+
+        self.width = map_data['width'] * GRID_SIZE
+        self.height = map_data['height'] * GRID_SIZE
+
+        self.start_x = map_data['start'][0] * GRID_SIZE
+        self.start_y = map_data['start'][1] * GRID_SIZE
+
+        for item in map_data['blocks']:
+            x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
+            img = block_images[item[2]]
+            self.starting_blocks.append(Block(x, y, img))
+
+        for item in map_data['bears']:
+            x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
+            self.starting_enemies.append(Bear(x, y, bear_images))
+
+        for item in map_data['monsters']:
+            x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
+            self.starting_enemies.append(Monster(x, y, monster_images))
+
+        for item in map_data['coins']:
+            x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
+            self.starting_coins.append(Coin(x, y, coin_img))
+
+        for item in map_data['oneups']:
+            x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
+            self.starting_powerups.append(OneUp(x, y, oneup_img))
+
+        for item in map_data['hearts']:
+            x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
+            self.starting_powerups.append(Heart(x, y, heart_img))
+
+        for i, item in enumerate(map_data['flag']):
+            x, y = item[0] * GRID_SIZE, item[1] * GRID_SIZE
+
+            if i == 0:
+                img = flag_img
+            else:
+                img = flagpole_img
+
+            self.starting_flag.append(Flag(x, y, img))
+
+        self.background_layer = pygame.Surface([self.width, self.height], pygame.SRCALPHA, 32)
+        self.scenery_layer = pygame.Surface([self.width, self.height], pygame.SRCALPHA, 32)
+        self.inactive_layer = pygame.Surface([self.width, self.height], pygame.SRCALPHA, 32)
+        self.active_layer = pygame.Surface([self.width, self.height], pygame.SRCALPHA, 32)
+
+        if map_data['background-color'] != "":
+            self.background_layer.fill(map_data['background-color'])
+
+        if map_data['background-img'] != "":
+            background_img = pygame.image.load(map_data['background-img'])
+
+            if map_data['background-fill-y']:
+                h = background_img.get_height()
+                w = int(background_img.get_width() * HEIGHT / h)
+                background_img = pygame.transform.scale(background_img, (w, HEIGHT))
+
+            if "top" in map_data['background-position']:
+                start_y = 0
+            elif "bottom" in map_data['background-position']:
+                start_y = self.height - background_img.get_height()
+
+            if map_data['background-repeat-x']:
+                for x in range(0, self.width, background_img.get_width()):
+                    self.background_layer.blit(background_img, [x, start_y])
+            else:
+                self.background_layer.blit(background_img, [0, start_y])
+
+        if map_data['scenery-img'] != "":
+            scenery_img = pygame.image.load(map_data['scenery-img'])
+
+            if map_data['scenery-fill-y']:
+                h = scenery_img.get_height()
+                w = int(scenery_img.get_width() * HEIGHT / h)
+                scenery_img = pygame.transform.scale(scenery_img, (w, HEIGHT))
+
+            if "top" in map_data['scenery-position']:
+                start_y = 0
+            elif "bottom" in map_data['scenery-position']:
+                start_y = self.height - scenery_img.get_height()
+
+            if map_data['scenery-repeat-x']:
+                for x in range(0, self.width, scenery_img.get_width()):
+                    self.scenery_layer.blit(scenery_img, [x, start_y])
+            else:
+                self.scenery_layer.blit(scenery_img, [0, start_y])
+
+        pygame.mixer.music.load(map_data['music'])
+
+        self.gravity = map_data['gravity']
+        self.terminal_velocity = map_data['terminal-velocity']
+
+        self.completed = False
+
+        self.blocks.add(self.starting_blocks)
+        self.enemies.add(self.starting_enemies)
+        self.coins.add(self.starting_coins)
+        self.powerups.add(self.starting_powerups)
+        self.flag.add(self.starting_flag)
+
+        self.active_sprites.add(self.coins, self.enemies, self.powerups)
+        self.inactive_sprites.add(self.blocks, self.flag)
+
+        self.inactive_sprites.draw(self.inactive_layer)
+
+    def reset(self):
+        self.enemies.add(self.starting_enemies)
+        self.coins.add(self.starting_coins)
+        self.powerups.add(self.starting_powerups)
+
         self.active_sprites.add(self.coins, self.enemies, self.powerups)
 
-        self.inactive_sprites = pygame.sprite.Group()
-        self.inactive_sprites.add(blocks, flag)
-
-        self.width, self.height = 2048, 640
-        self.start_x, self.start_y = 500, 512
-        
-        self.completed = False
-        self.gravity = 1
-
+        for e in self.enemies:
+            e.reset()
 
 class Game():
 
-    START = 0
-    PLAYING = 1
-    COMPLETE = 2
-    GAME_OVER = 3
+    SPLASH = 0
+    START = 1
+    PLAYING = 2
+    PAUSED = 3
+    LEVEL_COMPLETED = 4
+    GAME_OVER = 5
+    VICTORY = 6
 
-    def __init__(self, hero):
-        self.hero = hero
-
+    def __init__(self):
         self.window = pygame.display.set_mode([WIDTH, HEIGHT])
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
+        self.done = False
 
-        self.stage = Game.START
-        self.running = True
-        
-    def start(self, level):
-        self.level = level
+        self.reset()
+
+    def start(self):
+        self.level = Level(levels[self.current_level])
+        self.level.reset()
         self.hero.respawn(self.level)
-        
-        self.background_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
-        self.scenery_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
-        self.inactive_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
-        self.active_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
-        self.foreground_layer = None
-        self.stats_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
-        self.splash_layer = pygame.Surface([level.width, level.height], pygame.SRCALPHA, 32)
 
-        for i in range(0, level.width, background_img.get_width()):
-            self.background_layer.blit(background_img, [i, 0])
-        
-        for i in range(0, level.width, scenery_img.get_width()):
-            self.scenery_layer.blit(scenery_img, [i, 0])
-        
-        self.level.inactive_sprites.draw(self.inactive_layer)
-        
-        line1 = FONT_LG.render(TITLE, 1, DARK_CHALKY_BLUE)
+    def advance_level(self):
+        self.current_level += 1
+        self.start()
+        self.stage = Game.START
+
+    def reset(self):
+        self.hero = Character(hero_images)
+        self.current_level = 0
+        self.start()
+        self.stage = Game.SPLASH
+
+    def display_splash(self, surface):
+        line1 = FONT_LG.render(TITLE, 1, DARK_BLUE)
         line2 = FONT_SM.render("Press any key to start.", 1, WHITE)
 
         x1 = WIDTH / 2 - line1.get_width() / 2;
         y1 = HEIGHT / 3 - line1.get_height() / 2;
-        
+
         x2 = WIDTH / 2 - line2.get_width() / 2;
         y2 = y1 + line1.get_height() + 16;
-        
-        self.splash_layer.blit(line1, (x1, y1))
-        self.splash_layer.blit(line2, (x2, y2))
 
-    def display_message(self, primary_text, secondary_text):
+        surface.blit(line1, (x1, y1))
+        surface.blit(line2, (x2, y2))
+
+    def display_message(self, surface, primary_text, secondary_text):
         line1 = FONT_MD.render(primary_text, 1, WHITE)
         line2 = FONT_SM.render(secondary_text, 1, WHITE)
 
         x1 = WIDTH / 2 - line1.get_width() / 2;
         y1 = HEIGHT / 3 - line1.get_height() / 2;
-        
+
         x2 = WIDTH / 2 - line2.get_width() / 2;
         y2 = y1 + line1.get_height() + 16;
-        
-        self.window.blit(line1, (x1, y1))
-        self.window.blit(line2, (x2, y2))
-    
-    def update_stats(self):
+
+        surface.blit(line1, (x1, y1))
+        surface.blit(line2, (x2, y2))
+
+    def display_stats(self, surface):
         hearts_text = FONT_SM.render("Hearts: " + str(self.hero.hearts), 1, WHITE)
         lives_text = FONT_SM.render("Lives: " + str(self.hero.lives), 1, WHITE)
         score_text = FONT_SM.render("Score: " + str(self.hero.score), 1, WHITE)
 
-        self.stats_layer.fill(TRANSPARENT)
-        self.stats_layer.blit(score_text, (WIDTH - score_text.get_width() - 32, 32))
-        self.stats_layer.blit(hearts_text, (32, 32))
-        self.stats_layer.blit(lives_text, (32, 64))
+        surface.blit(score_text, (WIDTH - score_text.get_width() - 32, 32))
+        surface.blit(hearts_text, (32, 32))
+        surface.blit(lives_text, (32, 64))
+
+    def process_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.done = True
+
+            elif event.type == pygame.KEYDOWN:
+                if self.stage == Game.SPLASH or self.stage == Game.START:
+                    self.stage = Game.PLAYING
+                    play_music()
+
+                elif self.stage == Game.PLAYING:
+                    if event.key == JUMP:
+                        self.hero.jump(self.level.blocks)
+
+                elif self.stage == Game.PAUSED:
+                    pass
+
+                elif self.stage == Game.LEVEL_COMPLETED:
+                    self.advance_level()
+
+                elif self.stage == Game.VICTORY or self.stage == Game.GAME_OVER:
+                    if event.key == pygame.K_r:
+                        self.reset()
+
+        pressed = pygame.key.get_pressed()
+
+        if self.stage == Game.PLAYING:
+            if pressed[LEFT]:
+                self.hero.move_left()
+            elif pressed[RIGHT]:
+                self.hero.move_right()
+            else:
+                self.hero.stop()
+
+    def update(self):
+        if self.stage == Game.PLAYING:
+            self.hero.update(self.level)
+            self.level.enemies.update(self.level, self.hero)
+
+        if self.level.completed:
+            if self.current_level < len(levels) - 1:
+                self.stage = Game.LEVEL_COMPLETED
+            else:
+                self.stage = Game.VICTORY
+            pygame.mixer.music.stop()
+
+        elif self.hero.lives == 0:
+            self.stage = Game.GAME_OVER
+            pygame.mixer.music.stop()
+
+        elif self.hero.hearts == 0:
+            self.level.reset()
+            self.hero.respawn(self.level)
 
     def calculate_offset(self):
         x = -1 * self.hero.rect.centerx + WIDTH / 2
@@ -511,167 +714,47 @@ class Game():
 
         return x, 0
 
-    def process_input(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-                
-            elif event.type == pygame.KEYDOWN:
-                if self.stage == Game.START:
-                    self.stage = Game.PLAYING
+    def draw(self):
+        offset_x, offset_y = self.calculate_offset()
 
-                    pygame.mixer.music.play(-1)
-                    
-                elif self.stage == Game.PLAYING:
-                    if event.key == JUMP:
-                        JUMP_SOUND.play()
-                        self.hero.jump(self.level.blocks)
-                        
-                elif self.stage == Game.COMPLETE:
-                    pass
-                        
-                elif self.stage == Game.GAME_OVER:
-                    pass
-                    
-        pressed = pygame.key.get_pressed()
-        
-        if self.stage == Game.PLAYING:
-            if pressed[LEFT]:
-                self.hero.move_left()
-            elif pressed[RIGHT]:
-                self.hero.move_right()
-            else:
-                self.hero.stop()
-        
+        self.level.active_layer.fill(TRANSPARENT)
+        self.level.active_sprites.draw(self.level.active_layer)
+
+        if self.hero.invincibility % 3 < 2:
+            self.level.active_layer.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
+
+        self.window.blit(self.level.background_layer, [offset_x / 3, offset_y])
+        self.window.blit(self.level.scenery_layer, [offset_x / 2, offset_y])
+        self.window.blit(self.level.inactive_layer, [offset_x, offset_y])
+        self.window.blit(self.level.active_layer, [offset_x, offset_y])
+
+        self.display_stats(self.window)
+
+        if self.stage == Game.SPLASH:
+            self.display_splash(self.window)
+        elif self.stage == Game.START:
+            self.display_message(self.window, "Ready?!!!!", "Press any key to start.")
+        elif self.stage == Game.PAUSED:
+            pass
+        elif self.stage == Game.LEVEL_COMPLETED:
+            self.display_message(self.window, "Level Complete", "Press any key to continue.")
+        elif self.stage == Game.VICTORY:
+            self.display_message(self.window, "You Win!", "Press 'R' to restart.")
+        elif self.stage == Game.GAME_OVER:
+            self.display_message(self.window, "Game Over", "Press 'R' to restart.")
+
+        pygame.display.flip()
+
     def loop(self):
-        while self.running:
-            # Event handling
-            self.process_input()
-
-            # Game Logic
-            if self.stage == Game.PLAYING:
-                self.hero.update(self.level)
-                self.level.enemies.update(self.level, self.hero)
-
-            if self.level.completed:
-                self.stage = Game.COMPLETE
-                pygame.mixer.music.stop()
-            elif self.hero.lives == 0:
-                self.stage = Game.GAME_OVER
-                pygame.mixer.music.stop()
-            elif self.hero.hearts == 0:
-                self.hero.respawn(self.level)
-
-            self.update_stats()
-            
-            # Drawing
-            offset_x, offset_y = self.calculate_offset()
-
-            self.active_layer.fill(TRANSPARENT)
-            self.level.active_sprites.draw(self.active_layer)
-
-            if self.hero.invincibility % 3 < 2:
-                self.active_layer.blit(self.hero.image, [self.hero.rect.x, self.hero.rect.y])
-
-            self.window.blit(self.background_layer, [offset_x / 3, offset_y])
-            self.window.blit(self.scenery_layer, [offset_x / 2, offset_y])
-            self.window.blit(self.inactive_layer, [offset_x, offset_y])
-            self.window.blit(self.active_layer, [offset_x, offset_y])
-            self.window.blit(self.stats_layer, [0, 0])
-
-            if self.stage == Game.START:
-                self.window.blit(self.splash_layer, [0, 0])
-                pass
-            elif self.stage == Game.COMPLETE:
-                self.display_message("Level Complete", "Press 'C' to continue.")
-            elif self.stage == Game.GAME_OVER:
-                self.display_message("Game Over", "Press 'R' to restart.")
-
-            # Update window
-            pygame.display.update()
+        while not self.done:
+            self.process_events()
+            self.update()
+            self.draw()
             self.clock.tick(FPS)
 
-        # Close window on quit
-        pygame.quit ()
-
-
-def main():
-    # Make sprites
-    ''' hero '''
-    hero = Character(500, 512, hero_img)
-
-    ''' blocks '''
-    blocks = pygame.sprite.Group()
-     
-    for i in range(0, WIDTH * 100, 64):
-        b = Block(i, 576, TM)
-        blocks.add(b)
-
-    blocks.add(Block(192, 448, EL))
-    blocks.add(Block(256, 448, TM))
-    blocks.add(Block(320, 448, ER))
-
-    blocks.add(Block(448, 320, EL))
-    blocks.add(Block(512, 320, ER))
-    
-    blocks.add(Block(792, 448, LF))
-    blocks.add(Block(896, 320, LF))
-
-    blocks.add(Block(1024, 192, EL))
-    blocks.add(Block(1088, 192, TM))
-    blocks.add(Block(1152, 192, TM))
-    blocks.add(Block(1216, 192, TM))
-    blocks.add(Block(1280, 192, ER))
-
-    blocks.add(Block(1536, 512, TL))
-    blocks.add(Block(1600, 448, TL))
-    blocks.add(Block(1600, 512, CN))
-    blocks.add(Block(1664, 384, TP))
-    blocks.add(Block(1664, 448, CN))
-    blocks.add(Block(1664, 512, CN))
-
-    ''' coins '''
-    coins = pygame.sprite.Group()
-
-    coins.add(Coin(256, 320, coin_img))
-    
-    coins.add(Coin(1024, 384, coin_img))
-    coins.add(Coin(1152, 384, coin_img))
-    coins.add(Coin(1280, 384, coin_img))
-
-    ''' enemies '''
-    enemies = pygame.sprite.Group()
-
-    enemies.add(Bear(512, 256, bear_images))
-    enemies.add(Bear(832, 512, bear_images))
-    enemies.add(Monster(1152, 128, monster_images))
-
-    for i in range(200):
-        r = random.randint(3000, 50000)
-        enemies.add(Monster(r, 512, monster_images))
-        
-    ''' powerups '''
-    powerups = pygame.sprite.Group()
-
-    powerups.add(OneUp(448, 256, oneup_img))
-    powerups.add(Heart(1152, 128, heart_img))
-
-    ''' goal '''
-    flag = pygame.sprite.Group()
-    flag.add(Flag(1920, 320, flag_img))
-    flag.add(Flag(1920, 384, flagpole_img))
-    flag.add(Flag(1920, 448, flagpole_img))
-    flag.add(Flag(1920, 512, flagpole_img))
-
-    # Make a level
-    level = Level(blocks, coins, enemies, powerups, flag)
-
-    # Start game
-    game = Game(hero)
-    game.start(level)
-    game.loop()
-
-
 if __name__ == "__main__":
-    main()
-    
+    game = Game()
+    game.start()
+    game.loop()
+    pygame.quit()
+    sys.exit()
