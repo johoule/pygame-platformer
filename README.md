@@ -9,7 +9,9 @@
 
 - Change the dimensions of the game window.
 - Name your game.
-- Find your own custom artwork.
+- Find your own custom artwork for blocks.
+- Find your own custom artwork for the hero.
+- Find your own custom artwork for enemies.
 - Find your own fonts.
 - Find your own sound effects and music.
 - Customize the background layer for a level.
@@ -36,6 +38,7 @@
 - Make a player die when they fall through the bottom of the world. You'll need to make sure enemies that fall through are also removed from the game. Pygame's sprite.kill() function will be useful for this.
 - Make a credits screen for when the player wins the game.
 - Add a 'Pause' stage to the game which is activated when the player presses 'P' (or a button on the joystick). All movement and time should stop during a pause stage. Pressing 'P' again should resume. Be sure to show a message indicating the game is paused.
+- Add a victory sound that plays when the game is won.
 
 ### Hard
 
@@ -43,6 +46,7 @@
 - Incorporate different kinds of levels (normal, space level, underwater, etc.) into the game.
 - Change the game so that it uses the XBox controller instead of the keyboard. (https://github.com/joncoop/pygame-xbox360controller)
 - Kill enemies when you land on them. You'll need to check which direction you hit the enemy from in process enemies. Award different point values for different enemy types.
+- Make the game save high scores to a text file in a data folder.
 
 ### How clever are you?
 

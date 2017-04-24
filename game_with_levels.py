@@ -15,7 +15,7 @@ FPS = 60
 GRID_SIZE = 64
 
 # Options
-sound_on = False
+sound_on = True
 
 # Controls
 LEFT = pygame.K_LEFT
@@ -23,7 +23,7 @@ RIGHT = pygame.K_RIGHT
 JUMP = pygame.K_SPACE
 
 # Levels
-levels = ["level-1.json"]
+levels = ["level-1.json", "level-1.json", "level-1.json"]
 
 # Colors
 TRANSPARENT = (0, 0, 0, 0)
@@ -579,35 +579,37 @@ class Level():
 
 class Game():
 
-    START = 0
-    PLAYING = 1
-    PAUSED = 2
-    LEVEL_COMPLETED = 3
-    LOSE = 4
-    WIN = 5
+    SPLASH = 0
+    START = 1
+    PLAYING = 2
+    PAUSED = 3
+    LEVEL_COMPLETED = 4
+    GAME_OVER = 5
+    VICTORY = 6
 
-    def __init__(self, levels):
+    def __init__(self):
         self.window = pygame.display.set_mode([WIDTH, HEIGHT])
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
-
-        self.levels = levels
-        self.hero = Character(hero_images)
-
-        self.stage = Game.START
         self.done = False
-        self.current_level = 0
+
+        self.reset()
 
     def start(self):
-        self.level = Level(self.levels[self.current_level])
+        self.level = Level(levels[self.current_level])
         self.level.reset()
         self.hero.respawn(self.level)
 
     def advance_level(self):
-        pass
+        self.current_level += 1
+        self.start()
+        self.stage = Game.START
 
     def reset(self):
-        pass
+        self.hero = Character(hero_images)
+        self.current_level = 0
+        self.start()
+        self.stage = Game.SPLASH
 
     def display_splash(self, surface):
         line1 = FONT_LG.render(TITLE, 1, DARK_BLUE)
@@ -650,7 +652,7 @@ class Game():
                 self.done = True
 
             elif event.type == pygame.KEYDOWN:
-                if self.stage == Game.START:
+                if self.stage == Game.SPLASH or self.stage == Game.START:
                     self.stage = Game.PLAYING
                     play_music()
 
@@ -662,10 +664,11 @@ class Game():
                     pass
 
                 elif self.stage == Game.LEVEL_COMPLETED:
-                    pass
+                    self.advance_level()
 
-                elif self.stage == Game.GAME_OVER:
-                    pass
+                elif self.stage == Game.VICTORY or self.stage == Game.GAME_OVER:
+                    if event.key == pygame.K_r:
+                        self.reset()
 
         pressed = pygame.key.get_pressed()
 
@@ -683,11 +686,16 @@ class Game():
             self.level.enemies.update(self.level, self.hero)
 
         if self.level.completed:
-            self.stage = Game.LEVEL_COMPLETED
+            if self.current_level < len(levels) - 1:
+                self.stage = Game.LEVEL_COMPLETED
+            else:
+                self.stage = Game.VICTORY
             pygame.mixer.music.stop()
+
         elif self.hero.lives == 0:
             self.stage = Game.GAME_OVER
             pygame.mixer.music.stop()
+
         elif self.hero.hearts == 0:
             self.level.reset()
             self.hero.respawn(self.level)
@@ -720,13 +728,17 @@ class Game():
 
         self.display_stats(self.window)
 
-        if self.stage == Game.START:
+        if self.stage == Game.SPLASH:
             self.display_splash(self.window)
+        elif self.stage == Game.START:
+            self.display_message(self.window, "Ready?!!!!", "Press any key to start.")
         elif self.stage == Game.PAUSED:
             pass
         elif self.stage == Game.LEVEL_COMPLETED:
-            self.display_message(self.window, "Level Complete", "Press 'C' to continue.")
-        elif self.stage == Game.LOSE:
+            self.display_message(self.window, "Level Complete", "Press any key to continue.")
+        elif self.stage == Game.VICTORY:
+            self.display_message(self.window, "You Win!", "Press 'R' to restart.")
+        elif self.stage == Game.GAME_OVER:
             self.display_message(self.window, "Game Over", "Press 'R' to restart.")
 
         pygame.display.flip()
@@ -739,7 +751,7 @@ class Game():
             self.clock.tick(FPS)
 
 if __name__ == "__main__":
-    game = Game(levels)
+    game = Game()
     game.start()
     game.loop()
     pygame.quit()
