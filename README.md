@@ -17,6 +17,7 @@
 - Customize the background layer for a level.
 - Customize the scenery layer for a level.
 - Create a custom splash screen.
+- Improve the display_message function so that the text is in a box making it easier to read against the background.
 - Change point value for coins.
 - Make power-ups give points to the player.
 - Display hearts/max rather than just hearts.
@@ -35,10 +36,11 @@
 - Invent your own power-up which lasts a limited amount of time or until the player hits an enemy.
 - Invent a "power-up" which has a negative consequence on a player other than reducing hearts or lives.
 - Display lives with a character icon x number of lives.
-- Put gaps in your level. Then make a player die when they fall through the bottom of the world. You'll need to make sure enemies that fall through are also removed from the game. Pygame's sprite.kill() function will be useful for this.
+- Put gaps in the blocks that run along the bottom of the level. Then make a player die when they fall through the bottom of the world. You'll need to make sure enemies that fall through are also removed from the game. Pygame's sprite.kill() function will be useful for this.
 - Make a credits screen for when the player wins the game.
 - Add a 'Pause' stage to the game which is activated when the player presses 'P' (or a button on the joystick). All movement and time should stop during a pause stage. Pressing 'P' again should resume. Be sure to show a message indicating the game is paused.
 - Give points for getting the flag at the end of the level. Do so in a way that landing higher on the flagpole earns more points.
+
 
 ### Hard
 
@@ -54,9 +56,11 @@
 - Add secret parts of the level that utilize vertical scrolling.
 
 ### How clever are you?
-- Add ladders to the game. If a player is on a ladder, don't apply gravity. Assign vy by player input instead.
+- Add ladders to the game. If a player is on a ladder, don't apply gravity. Assign vy by player input instead. Also disable jumping while on a ladder. You should use animated climbing images too.
 - Put switches in the game that open and close areas of a level.
-- Create a Chest object with a boolean attribute locked set to True. Then create a Key object. If the player intersects a locked chest with a key, then locked should be set to False and the image should be updated. Spawn a prize that the player can acquire in the grid location directly above the chest when it is unlocked. Be sure to take away the players key when the character respawns after dying or at the start of a new level.
+- Create a Chest object with a boolean attribute locked set to True when it is initialized. Then create a Key object. If the player intersects a locked chest with a key, then locked should be set to False and the image should be updated. Spawn a prize that the player can acquire in the grid location directly above the chest when it is unlocked. Be sure to take away the players key when the character respawns after dying or at the start of a new level.
+- Give your player a gun. Let your player kill enemies by shooting them. You'll need to create Bullet objects which spawn at the hero's gun and travel in the direction the hero is facing. Bullets shouldn't travel indefinitely. Limit the number of ticks a bullet will exist before it calls the kill() function on itself. Enemies can be given a process_bullets function. (You might need to make the shooter/hero a bullet parameter so that when the bullet hits an enemy, points can be awarded.)
+- Make a sign you can read or a character that 'speaks'. Display a message when the hero intersects the sign or speaking character while holding the up arrow. Don't use the default display_message function. Put a function in the Sign/SpeakingCharacter class that makes a popup that looks like text on a sign or perhaps a speech bubble.
 
 ### More!
 
