@@ -51,7 +51,11 @@ def play_music():
         pygame.mixer.music.play(-1)
 
 # Images
-hero_img = load_image("assets/character/adventurer_walk1.png")
+hero_walk1 = load_image("assets/character/adventurer_walk1.png")
+hero_walk2 = load_image("assets/character/adventurer_walk2.png")
+hero_jump = load_image("assets/character/adventurer_jump.png")
+hero_images = {"run": [hero_walk1, hero_walk2],
+               "jump": hero_jump}
 
 block_images = {"TL": load_image("assets/tiles/top_left.png"),
                 "TM": load_image("assets/tiles/top_middle.png"),
@@ -102,14 +106,25 @@ class Block(Entity):
 
 class Character(Entity):
 
-    def __init__(self, image):
-        super().__init__(0, 0, image)
+    def __init__(self, images):
+        super().__init__(0, 0, images['run'][0])
+
+        self.images_right = images['run']
+        self.images_left = [pygame.transform.flip(img, 1, 0) for img in self.images_right]
+        self.image_jump_right = images['jump']
+        self.image_jump_left = pygame.transform.flip(self.image_jump_right, 1, 0)
+
+        self.current_images = self.images_right
+        self.image_index = 0
+        self.steps = 0
 
         self.speed = 5
         self.jump_power = 20
 
         self.vx = 0
         self.vy = 0
+        self.facing_right = True
+        self.on_ground = True
 
         self.score = 0
         self.lives = 3
@@ -119,9 +134,11 @@ class Character(Entity):
 
     def move_left(self):
         self.vx = -self.speed
+        self.facing_right = False
 
     def move_right(self):
         self.vx = self.speed
+        self.facing_right = True
 
     def stop(self):
         self.vx = 0
@@ -158,6 +175,7 @@ class Character(Entity):
                 self.rect.left = block.rect.right
                 self.vx = 0
 
+        self.on_ground = False
         self.rect.y += self.vy
         hit_list = pygame.sprite.spritecollide(self, blocks, False)
 
@@ -165,6 +183,7 @@ class Character(Entity):
             if self.vy > 0:
                 self.rect.bottom = block.rect.top
                 self.vy = 0
+                self.on_ground = True
             elif self.vy < 0:
                 self.rect.top = block.rect.bottom
                 self.vy = 0
@@ -202,11 +221,31 @@ class Character(Entity):
 
         return got_it
 
+    def set_image(self):
+        if self.on_ground:
+            if self.facing_right:
+                self.current_images = self.images_right
+            else:
+                self.current_images = self.images_left
+
+            if self.vx != 0:
+                self.steps = (self.steps + 1) % 5
+
+                if self.steps == 0:
+                    self.image_index = (self.image_index + 1) % len(self.current_images)
+
+            self.image = self.current_images[self.image_index]
+        else:
+            if self.facing_right:
+                self.image = self.image_jump_right
+            else:
+                self.image = self.image_jump_left
+
     def die(self):
         self.lives -= 1
 
         if self.lives > 0:
-            DIE_SOUND.play()
+            play_sound(DIE_SOUND)
         else:
             play_sound(GAMEOVER_SOUND)
 
@@ -220,6 +259,7 @@ class Character(Entity):
         self.move_and_process_blocks(level.blocks)
         self.check_world_boundaries(level)
         self.process_enemies(level.enemies)
+        self.set_image()
 
         if self.hearts > 0:
             self.process_coins(level.coins)
@@ -246,7 +286,7 @@ class Enemy(Entity):
         self.images_right = [pygame.transform.flip(img, 1, 0) for img in images]
         self.current_images = self.images_left
         self.image_index = 0
-        self.ticks = 0
+        self.steps = 0
 
     def reverse(self):
         self.vx *= -1
@@ -272,12 +312,12 @@ class Enemy(Entity):
     def move_and_process_blocks(self):
         pass
 
-    def step_images(self):
-        if self.ticks == 0:
+    def set_images(self):
+        if self.steps == 0:
             self.image = self.current_images[self.image_index]
             self.image_index = (self.image_index + 1) % len(self.current_images)
 
-        self.ticks = (self.ticks + 1) % (FPS / 3)
+        self.steps = (self.steps + 1) % 20 # Nothing significant about 20. It just seems to work okay.
 
     def is_near(self, hero):
         return abs(self.rect.x - hero.rect.x) < 2 * WIDTH
@@ -287,7 +327,7 @@ class Enemy(Entity):
             self.apply_gravity(level)
             self.move_and_process_blocks(level.blocks)
             self.check_world_boundaries(level)
-            self.step_images()
+            self.set_images()
 
     def reset(self):
         self.rect.x = self.start_x
@@ -295,7 +335,7 @@ class Enemy(Entity):
         self.vx = self.start_vx
         self.vy = self.start_vy
         self.image = self.images_left[0]
-        self.ticks = 0
+        self.steps = 0
 
 class Bear(Enemy):
     def __init__(self, x, y, images):
@@ -380,13 +420,6 @@ class Monster(Enemy):
 
         if reverse:
             self.reverse()
-
-    def update(self, level, hero):
-        if self.is_near(hero):
-            self.apply_gravity(level)
-            self.move_and_process_blocks(level.blocks)
-            self.check_world_boundaries(level)
-            self.step_images()
 
 class OneUp(Entity):
     def __init__(self, x, y, image):
@@ -559,7 +592,7 @@ class Game():
         self.clock = pygame.time.Clock()
 
         self.levels = levels
-        self.hero = Character(hero_img)
+        self.hero = Character(hero_images)
 
         self.stage = Game.START
         self.done = False
