@@ -60,7 +60,6 @@
 - Show time on the stats layer. Give a time bonus for completing a level. Have the hero die if the level is not completed in a set amount of time.
 - Animate a background element such as clouds or flickering torches. (This is probably best accomplished by creating another layer that scrolls along with the background or scenery layer rather than trying to blit directly on one of those layers.)
 - Add secret parts of the level that utilize vertical scrolling.
-- Add more states to the Character/Hero animation. (Climbing, skidding, falling, etc.)
 
 
 ### Very hard
