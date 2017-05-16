@@ -47,6 +47,7 @@
 - Give points for getting the flag at the end of the level. Do so in a way that landing higher on the flagpole earns more points.
 - Use a modifier key that makes you run faster while the key is held.
 - Create cover art for your game. Save it as a PNG file. Print it in color and I'll post it in the room.
+- Add a third paralax layer that scrolls at a different speed than the other layers. Be sure that closer layers always scroll faster than far away layers.
 
 ### Hard
 
