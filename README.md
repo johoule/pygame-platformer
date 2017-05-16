@@ -93,6 +93,6 @@ You may work in groups of 2 or 3 if you wish. However, groups of two will have t
     - Basic game play instructions. Be sure to describe the goal of the game, controls, and basic information about enemies and powerups. (20 points)
     - Include at least 3 screenshots of actual game play in the instructions (10 points)
 - Choose 1 feature of your game that you developed that incorporates code. Create a Google Doc in which you...
-    - Explain what the feature added is and explain key features of your code that make it work. Be sure to discuss paramaters and returns of functions as well as any class variables that are used. Your response should be between 100 and 200 words. (20 points)
+    - Explain what the feature added is and explain key features of your code that make it work. Be sure to discuss parameters and returns of functions as well as any class variables that are used. Your response should be between 100 and 200 words. (20 points)
     - Discuss the development process for that feature. Explain how you incrementally achieved your goal and discuss any problems you had along the way as well as solutions to those problems. Your response should be between 100 and 200 words. (20 points)
     - Create a short video (15-30 seconds) demonstrating that feature. You can save your video in Google Drive. Copy the link into your Doc and be sure that you set the sharing permissions on the video so that I can view it. (10 points)
