@@ -34,6 +34,7 @@
 - Let the 'M' key toggle music on and off. Show a little note icon (crossed out or uncrossed) to indicate the current state of music.
 - Create your own custom artwork. http://www.piskelapp.com/ is a good site for this.
 - Create invincibility (star) power-up. (The optional arguments on the play_sound function can help you match an invincibility sound length to the invincibility period.)
+- Add a falling image to your character animation.
 - Increase the max hearts a player can have when some milestone is achieved.
 - Add prizes other than coins and give them a point value.
 - Track coins separately from the score. (They can still be worth points.) Give an extra life when a number of coins is earned. Reset the coin count after a life is given.
@@ -86,7 +87,11 @@ You may work in groups of 2 or 3 if you wish. However, groups of two will have t
 
 ## Final Exam (Seniors)
 
-- Create a website for your game using GitHub Pages. You do not need to write any HTML/CSS. Simply choose a GitHub pages theme that fits your game. Your website should include a download link, instructions for running the game which include stating the necessary version of Python and Pygame to install, and basic instructions for play including screenshots. (This cannot be part of your first 100 points.)
-- Choose 1 feature of your game that you developed that incorporates code, not just swapping out images. Explain what the feature added is and explain key features of your code that make it work.
-- Discuss iterative development process for that feature.
-- Create a short video (15-30 seconds) demonstrating that feature.
+- Create a website for your game using GitHub Pages. You do not need to write any HTML/CSS. Simply choose a GitHub pages theme that fits your game. Your website should include...
+    - A download link
+    - Instructions for running the game which include stating the necessary version of Python and Pygame to install
+    - Basic instructions for play including screenshots.
+- Choose 1 feature of your game that you developed that incorporates code
+    - Explain what the feature added is and explain key features of your code that make it work.
+    - Discuss iterative development process for that feature.
+    - Create a short video (15-30 seconds) demonstrating that feature.
