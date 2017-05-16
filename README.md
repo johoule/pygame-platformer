@@ -88,9 +88,9 @@ You may work in groups of 2 or 3 if you wish. However, groups of two will have t
 ## Final Exam (Seniors)
 
 - Create a website for your game using GitHub Pages. You do not need to write any HTML/CSS. Simply choose a GitHub pages theme that fits your game. Your website should include...
-    - A direct download link AND a link to the GitHub repository. (10 points)
+    - A direct download link and a link to the GitHub repository. (10 points)
     - Instructions for running the game which include stating the necessary version of Python and Pygame to install. (10 points)
-    - Basic instructions Be sure to describe the goal of the game, controls, and basic information about enemies and powerups. (20 points)
+    - Basic game play instructions. Be sure to describe the goal of the game, controls, and basic information about enemies and powerups. (20 points)
     - Include at least 3 screenshots of actual game play in the instructions (10 points)
 - Choose 1 feature of your game that you developed that incorporates code. Create a Google Doc in which you...
     - Explain what the feature added is and explain key features of your code that make it work. Be sure to discuss paramaters and returns of functions as well as any class variables that are used. Your response should be between 100 and 200 words. (20 points)
