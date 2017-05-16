@@ -91,7 +91,7 @@ You may work in groups of 2 or 3 if you wish. However, groups of two will have t
     - A download link and a link to the GitHub repository.
     - Instructions for running the game which include stating the necessary version of Python and Pygame to install.
     - Basic instructions for play including screenshots.
-- Choose 1 feature of your game that you developed that incorporates code
-    - Explain what the feature added is and explain key features of your code that make it work.
-    - Discuss iterative development process for that feature.
-    - Create a short video (15-30 seconds) demonstrating that feature.
+- Choose 1 feature of your game that you developed that incorporates code. Create a Google Doc in which you...
+    - Explain what the feature added is and explain key features of your code that make it work. Be sure to discuss paramaters and returns of functions as well as any class variables that are used. (100-200 words)
+    - Discuss the development process for that feature. Explain how you incrementally achieved your goal and discuss any problems you had along the way as well as solutions to those problems. (100-200 words)
+    - Create a short video (15-30 seconds) demonstrating that feature. You can save your video in Google Drive. Copy the link into your Doc and be sure that you set the sharing permissions on the video so that I can view it.
