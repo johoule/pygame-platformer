@@ -88,8 +88,8 @@ You may work in groups of 2 or 3 if you wish. However, groups of two will have t
 ## Final Exam (Seniors)
 
 - Create a website for your game using GitHub Pages. You do not need to write any HTML/CSS. Simply choose a GitHub pages theme that fits your game. Your website should include...
-    - A download link
-    - Instructions for running the game which include stating the necessary version of Python and Pygame to install
+    - A download link and a link to the GitHub repository.
+    - Instructions for running the game which include stating the necessary version of Python and Pygame to install.
     - Basic instructions for play including screenshots.
 - Choose 1 feature of your game that you developed that incorporates code
     - Explain what the feature added is and explain key features of your code that make it work.
