@@ -85,21 +85,6 @@ This project will count as two major assessments. When you reach 100 points, you
 You may work in groups of 2 or 3 if you wish. However, groups of two will have their scores multiplied by 2/3. This means 150 points are required for full credit. Groups of 3 will have scores divided by 2 which means 200 points are required for each assessment.
 
 
-## Final Exam (Seniors)
+## Final Exam
 
-#### Part 1
-
-Create a website for your game using GitHub Pages. You do not need to write any HTML/CSS. Simply choose a GitHub pages theme that fits your game. Your website should include...
-
-- A direct download link and a link to the GitHub repository. (10 points)
-- Instructions for running the game which include stating the necessary version of Python and Pygame to install. (10 points)
-- Basic game play instructions. Be sure to describe the goal of the game, controls, and basic information about enemies and powerups. (20 points)
-- Include at least 3 screenshots of actual game play in the instructions (10 points)
-    
-Part 2
-
-Choose the ONE most complex feature of your game that you developed that incorporates code which either utilizes mathematical or logical algorithms. This feature may also incorporate changes to the level data or images but it does not have to. Then create a Google Doc in which you...
-
-- In non-technical language, describe the feature you added to your game. Then explain key features of your code that make it work. Be sure to discuss parameters and returns of functions as well as any class variables that are used. Also discuss how this feature is integrated with the rest of the code. Your response should be between 100 and 200 words. (20 points)
-- Discuss the development process for that feature. Explain how you incrementally achieved your goal and discuss any problems you had along the way as well as solutions to those problems. Your response should be between 100 and 200 words. (15 points)
-- Create a short video (15-30 seconds) demonstrating that feature. You can save your video in Google Drive. Copy the link into your Doc and be sure that you set the sharing permissions on the video so that I can view it. Also write a sentence or two describing specifically what I should be looking for when viewing the video. (15 points)
+The instructions and template have been moved to Google Classroom.
