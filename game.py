@@ -25,7 +25,12 @@ JUMP = pygame.K_SPACE
 # Levels
 levels = ["levels/world-1.json",
           "levels/world-2.json",
-          "levels/world-3.json"]
+          "levels/world-3.json",
+          "levels/world-4.json",
+          "levels/world-5.json",
+          "levels/world-6.json",
+          "levels/world-7.json",
+          "levels/world-8.json"]
 
 # Colors
 TRANSPARENT = (0, 0, 0, 0)
@@ -72,19 +77,21 @@ block_images = {"TL": load_image("assets/tiles/top_left.png"),
                 "TP": load_image("assets/tiles/top.png"),
                 "CN": load_image("assets/tiles/center.png"),
                 "LF": load_image("assets/tiles/lone_float.png"),
-                "SP": load_image("assets/tiles/special.png")}
+                "SP": load_image("assets/tiles/special.png"),
+                "SM": load_image("assets/tiles/space_middle.png"),
+                "BX": load_image("assets/tiles/box.png")}
 
 coin_img = load_image("assets/items/coin.png")
 heart_img = load_image("assets/items/bandaid.png")
 oneup_img = load_image("assets/items/first_aid.png")
-flag_img = load_image("assets/items/flag.png")
+flag_img = load_image("assets/items/rey2.png")
 flagpole_img = load_image("assets/items/flagpole.png")
 
 monster_img1 = load_image("assets/enemies/monster-1.png")
 monster_img2 = load_image("assets/enemies/monster-2.png")
 monster_images = [monster_img1, monster_img2]
 
-bear_img = load_image("assets/enemies/bear-1.png")
+bear_img = load_image("assets/enemies/maul.png")
 bear_images = [bear_img]
 
 # Sounds
